@@ -530,6 +530,7 @@ tr:last-child td {
     justify-content: center;
     align-items: center;
     z-index: 1000;
+    padding: 1rem; /* Display overflowing modal nicely on smaller screens */
 }
 
 .modal-content {
@@ -537,19 +538,25 @@ tr:last-child td {
     padding: 2rem;
     border-radius: var(--radius);
     width: 90%;
-    max-width: 600px;
+    max-width: 650px;
+    max-height: 85vh; /* Limit content height */
+    overflow-y: auto;  /* Enable vertical scroll inside modal */
     position: relative;
     box-shadow: var(--shadow-lg);
     animation: fadeIn 0.2s ease-in-out;
 }
 
 .close-btn {
-    position: absolute;
-    top: 1rem;
-    right: 1.5rem;
+    position: sticky; /* Keeps close icon always visible at top right while scrolling */
+    top: 0;
+    float: right;
     font-size: 1.8rem;
     cursor: pointer;
     color: var(--text-muted);
+    z-index: 10;
+    background: #fff;
+    padding: 0 5px;
+    border-radius: 4px;
 }
 
 /* Toast Notifications */
@@ -581,46 +588,4 @@ tr:last-child td {
 @keyframes slideIn {
     from { transform: translateX(100%); }
     to { transform: translateX(0); }
-}
-
-/* Modal Styling */
-.modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(15, 23, 42, 0.6);
-    backdrop-filter: blur(4px);
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    padding: 1rem; /* Display overflowing modal nicely on smaller screens */
-}
-
-.modal-content {
-    background: #fff;
-    padding: 2rem;
-    border-radius: var(--radius);
-    width: 90%;
-    max-width: 650px;
-    max-height: 85vh; /* Limit content height */
-    overflow-y: auto;  /* Enable vertical scroll inside modal */
-    position: relative;
-    box-shadow: var(--shadow-lg);
-    animation: fadeIn 0.2s ease-in-out;
-}
-
-.close-btn {
-    position: sticky; /* Keeps close icon always visible at top right while scrolling */
-    top: 0;
-    float: right;
-    font-size: 1.8rem;
-    cursor: pointer;
-    color: var(--text-muted);
-    z-index: 10;
-    background: #fff;
-    padding: 0 5px;
-    border-radius: 4px;
 }
