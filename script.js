@@ -26,11 +26,39 @@ async function fetchData() {
         renderTablesAndCards();
         renderChart();
         
+        // Auto ID-க்களை செட் செய்யும் பகுதி
         setNextIDs();
 
     } catch (e) {
         console.error(e);
         showToast("Data loading failed. Please check permissions.", "error");
+    }
+}
+
+// அடுத்தடுத்த ID-களை தானாகவே படிவங்களில் அமைக்கும் செயல்பாடு
+function setNextIDs() {
+    if (globalData.funders && globalData.funders.length) {
+        document.getElementById('funderId').value = Math.max(...globalData.funders.map(f => Number(f.ID) || 0)) + 1;
+    } else {
+        document.getElementById('funderId').value = 1;
+    }
+
+    if (globalData.schools && globalData.schools.length) {
+        document.getElementById('schoolId').value = Math.max(...globalData.schools.map(s => Number(s.ID) || 0)) + 1;
+    } else {
+        document.getElementById('schoolId').value = 1;
+    }
+
+    if (globalData.vendors && globalData.vendors.length) {
+        document.getElementById('vendorId').value = Math.max(...globalData.vendors.map(v => Number(v.ID) || 0)) + 1;
+    } else {
+        document.getElementById('vendorId').value = 1;
+    }
+
+    if (globalData.activities && globalData.activities.length) {
+        document.getElementById('actId').value = Math.max(...globalData.activities.map(a => Number(a.ID) || 0)) + 1;
+    } else {
+        document.getElementById('actId').value = 1;
     }
 }
 
@@ -96,13 +124,12 @@ function calculateMetrics() {
         }
     });
 
-    // 3. Calculate Activities Expenses & Pending (ADDED THIS TO DASHBOARD CALCULATIONS)
+    // 3. Calculate Activities Expenses & Pending
     (globalData.activities || []).forEach(a => {
         const funder = a.Funder_Name || a.funder_name || a["Funder Name"];
         if (selectedFunder === "ALL" || funder === selectedFunder) {
             totalExpense += Number(a.Amount_Paid || a["Amount Paid"] || 0);
             
-            // Calculate pending if not explicitly given
             const cost = Number(a.Unit_Cost || a["Unit Cost"] || 0);
             const units = Number(a.Units || a["Units"] || 1);
             const total = cost * units;
@@ -155,7 +182,6 @@ function renderChart() {
 }
 
 function renderTablesAndCards() {
-    // Funders Table
     const funderTableBody = document.querySelector('#funderTable tbody');
     if(funderTableBody) {
         funderTableBody.innerHTML = '';
@@ -464,7 +490,7 @@ function showDashboardDetails(type) {
             }
         });
 
-        // Add Activities Data (NEWLY INCLUDED IN POPUP MODAL)
+        // Add Activities Data
         (globalData.activities || []).forEach(a => {
             const funder = a.Funder_Name || a["Funder Name"];
             const cost = Number(a.Unit_Cost || a["Unit Cost"] || 0);
@@ -501,6 +527,14 @@ function showDashboardDetails(type) {
 function closeModal() {
     document.getElementById('detailsModal').style.display = 'none';
 }
+
+// Modal-க்கு வெளியே கிளிக் செய்தாலும் Close ஆகும்
+window.onclick = function(event) {
+    const modal = document.getElementById('detailsModal');
+    if (event.target === modal) {
+        closeModal();
+    }
+};
 
 function editFunder(f) {
     document.getElementById('funderId').value = f.ID;
@@ -651,30 +685,4 @@ function showToast(message, type = "success") {
     toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : 'fa-triangle-exclamation'}"></i> ${message}`;
     container.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
-}
-
-function setNextIDs() {
-    if (globalData.funders && globalData.funders.length) {
-        document.getElementById('funderId').value = Math.max(...globalData.funders.map(f => Number(f.ID) || 0)) + 1;
-    } else {
-        document.getElementById('funderId').value = 1;
-    }
-
-    if (globalData.schools && globalData.schools.length) {
-        document.getElementById('schoolId').value = Math.max(...globalData.schools.map(s => Number(s.ID) || 0)) + 1;
-    } else {
-        document.getElementById('schoolId').value = 1;
-    }
-
-    if (globalData.vendors && globalData.vendors.length) {
-        document.getElementById('vendorId').value = Math.max(...globalData.vendors.map(v => Number(v.ID) || 0)) + 1;
-    } else {
-        document.getElementById('vendorId').value = 1;
-    }
-
-    if (globalData.activities && globalData.activities.length) {
-        document.getElementById('actId').value = Math.max(...globalData.activities.map(a => Number(a.ID) || 0)) + 1;
-    } else {
-        document.getElementById('actId').value = 1;
-    }
 }
