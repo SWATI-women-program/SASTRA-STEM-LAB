@@ -25,6 +25,8 @@ async function fetchData() {
         calculateMetrics();
         renderTablesAndCards();
         renderChart();
+        
+        setNextIDs();
 
     } catch (e) {
         console.error(e);
@@ -649,4 +651,30 @@ function showToast(message, type = "success") {
     toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : 'fa-triangle-exclamation'}"></i> ${message}`;
     container.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
+}
+
+function setNextIDs() {
+    if (globalData.funders && globalData.funders.length) {
+        document.getElementById('funderId').value = Math.max(...globalData.funders.map(f => Number(f.ID) || 0)) + 1;
+    } else {
+        document.getElementById('funderId').value = 1;
+    }
+
+    if (globalData.schools && globalData.schools.length) {
+        document.getElementById('schoolId').value = Math.max(...globalData.schools.map(s => Number(s.ID) || 0)) + 1;
+    } else {
+        document.getElementById('schoolId').value = 1;
+    }
+
+    if (globalData.vendors && globalData.vendors.length) {
+        document.getElementById('vendorId').value = Math.max(...globalData.vendors.map(v => Number(v.ID) || 0)) + 1;
+    } else {
+        document.getElementById('vendorId').value = 1;
+    }
+
+    if (globalData.activities && globalData.activities.length) {
+        document.getElementById('actId').value = Math.max(...globalData.activities.map(a => Number(a.ID) || 0)) + 1;
+    } else {
+        document.getElementById('actId').value = 1;
+    }
 }
