@@ -118,7 +118,7 @@ body {
     overflow-y: auto; 
 }
 
-/* Top Header & Modified Logo Section */
+/* Top Header & Highlighted Logo Section */
 .top-header {
     display: flex;
     justify-content: space-between;
@@ -143,31 +143,37 @@ body {
     margin-top: 2px;
 }
 
-/* Updated Plain White Container without Circles */
+/* Clean Logo Section without Circle or Outer Card */
 .logo-container {
     display: flex;
     align-items: center;
-    gap: 1.2rem;
-    background: #ffffff;
-    padding: 0.5rem 1rem;
+    gap: 1.5rem;
+    background: transparent;
+    padding: 0;
+    border: none;
+    box-shadow: none;
 }
 
 .logo-wrapper {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 4px;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
 }
 
 .logo-wrapper img {
-    max-height: 50px;
+    height: 48px;
     width: auto;
     object-fit: contain;
+    border-radius: 0;
 }
 
 .logo-divider {
     width: 1px;
-    height: 35px;
+    height: 32px;
     background: #cbd5e1;
 }
 
