@@ -530,33 +530,52 @@ tr:last-child td {
     justify-content: center;
     align-items: center;
     z-index: 1000;
-    padding: 1rem; /* Display overflowing modal nicely on smaller screens */
+    padding: 1rem;
 }
 
 .modal-content {
     background: #fff;
-    padding: 2rem;
     border-radius: var(--radius);
     width: 90%;
     max-width: 650px;
-    max-height: 85vh; /* Limit content height */
-    overflow-y: auto;  /* Enable vertical scroll inside modal */
-    position: relative;
+    max-height: 85vh; /* Screen-க்கு ஏற்றவாறு உயரம் அமைக்கும் */
+    display: flex;
+    flex-direction: column;
     box-shadow: var(--shadow-lg);
     animation: fadeIn 0.2s ease-in-out;
+    overflow: hidden;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.2rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    background: #fff;
+}
+
+.modal-header h2 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-dark);
 }
 
 .close-btn {
-    position: sticky; /* Keeps close icon always visible at top right while scrolling */
-    top: 0;
-    float: right;
     font-size: 1.8rem;
     cursor: pointer;
     color: var(--text-muted);
-    z-index: 10;
-    background: #fff;
-    padding: 0 5px;
-    border-radius: 4px;
+    line-height: 1;
+}
+
+.close-btn:hover {
+    color: var(--danger);
+}
+
+.modal-body {
+    padding: 1.5rem;
+    overflow-y: auto; /* Modal-க்குள்ளேயே Scroll ஆகும் */
+    flex: 1;
 }
 
 /* Toast Notifications */
