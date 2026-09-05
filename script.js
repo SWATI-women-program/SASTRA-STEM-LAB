@@ -614,7 +614,11 @@ async function saveActivityData() {
 
 async function sendData(payload, formId) {
     try {
-        await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+        await fetch(API_URL, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(payload) 
+        });
         showToast("Record Saved Successfully!", "success");
         document.getElementById(formId).reset();
         fetchData();
