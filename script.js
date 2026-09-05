@@ -142,10 +142,11 @@ function calculateMetrics() {
 
     const balance = totalFund - totalExpense;
 
-    document.getElementById('totalFund').innerText = '₹' + totalFund.toLocaleString();
-    document.getElementById('totalExpense').innerText = '₹' + totalExpense.toLocaleString();
-    document.getElementById('balance').innerText = '₹' + balance.toLocaleString();
-    document.getElementById('vendorPending').innerText = '₹' + totalPending.toLocaleString();
+    // Indian Standard (en-IN) Formatting Applied Here
+    document.getElementById('totalFund').innerText = '₹' + totalFund.toLocaleString('en-IN');
+    document.getElementById('totalExpense').innerText = '₹' + totalExpense.toLocaleString('en-IN');
+    document.getElementById('balance').innerText = '₹' + balance.toLocaleString('en-IN');
+    document.getElementById('vendorPending').innerText = '₹' + totalPending.toLocaleString('en-IN');
     
     renderChart();
 }
@@ -193,7 +194,7 @@ function renderTablesAndCards() {
                     <td><b>${name}</b></td>
                     <td>${f.Confirm_Date ? String(f.Confirm_Date).split('T')[0] : '-'}</td>
                     <td>${f.Received_Date ? String(f.Received_Date).split('T')[0] : '-'}</td>
-                    <td>₹${Number(f.Total_Fund || 0).toLocaleString()}</td>
+                    <td>₹${Number(f.Total_Fund || 0).toLocaleString('en-IN')}</td>
                     <td>
                         <button class="btn btn-action btn-primary" onclick='editFunder(${JSON.stringify(f)})'><i class="fa-solid fa-pen"></i> Edit</button>
                     </td>
@@ -273,9 +274,9 @@ function renderVendorGrid(vendorsList) {
                     <h3>#${v.ID} ${v.Vendor_Name || 'Vendor Name'}</h3>
                     <div class="school-info">Funder: <b>${v.Funder_Name || 'N/A'}</b></div>
                     <div class="school-info">Service: <b>${v.Service || 'N/A'}</b></div>
-                    <div class="school-info">Total Bill: <b>₹${total.toLocaleString()}</b></div>
-                    <div class="school-info">Paid: <b style="color:green;">₹${Number(v.Amount_Paid || 0).toLocaleString()}</b></div>
-                    <div class="school-info">Pending: <b style="color:red;">₹${Number(v.Amount_Pending || 0).toLocaleString()}</b></div>
+                    <div class="school-info">Total Bill: <b>₹${total.toLocaleString('en-IN')}</b></div>
+                    <div class="school-info">Paid: <b style="color:green;">₹${Number(v.Amount_Paid || 0).toLocaleString('en-IN')}</b></div>
+                    <div class="school-info">Pending: <b style="color:red;">₹${Number(v.Amount_Pending || 0).toLocaleString('en-IN')}</b></div>
                     <div style="display:flex; gap:0.5rem; margin-top:1rem;">
                         <button class="btn btn-action btn-primary" style="width:100%; justify-content:center;" onclick='event.stopPropagation(); editVendor(${JSON.stringify(v)})'>
                             <i class="fa-solid fa-pen"></i> Edit Entry
@@ -312,9 +313,9 @@ function renderActivityGrid(activitiesList) {
                     <h3>#${a.ID} ${a.Vendor_Name || a["Vendor Name"] || 'Vendor'}</h3>
                     <div class="school-info">Funder: <b>${a.Funder_Name || a["Funder Name"] || 'N/A'}</b></div>
                     <div class="school-info">Description: <b>${a.Description || 'N/A'}</b></div>
-                    <div class="school-info">Total Bill: <b>₹${total.toLocaleString()}</b></div>
-                    <div class="school-info">Paid: <b style="color:green;">₹${paid.toLocaleString()}</b></div>
-                    <div class="school-info">Pending: <b style="color:red;">₹${pending.toLocaleString()}</b></div>
+                    <div class="school-info">Total Bill: <b>₹${total.toLocaleString('en-IN')}</b></div>
+                    <div class="school-info">Paid: <b style="color:green;">₹${paid.toLocaleString('en-IN')}</b></div>
+                    <div class="school-info">Pending: <b style="color:red;">₹${pending.toLocaleString('en-IN')}</b></div>
                     <div style="display:flex; gap:0.5rem; margin-top:1rem;">
                         <button class="btn btn-action btn-primary" style="width:100%; justify-content:center;" onclick='editActivity(${JSON.stringify(a)})'>
                             <i class="fa-solid fa-pen"></i> Edit Entry
@@ -405,11 +406,11 @@ function showVendorDetails(v) {
             <p><b>Financial Year:</b> ${v.Financial_Year || '-'}</p>
             <p><b>Service Provided:</b> ${v.Service || 'N/A'}</p>
             <hr style="margin:0.5rem 0;">
-            <p><b>Unit Cost:</b> ₹${unitCost.toLocaleString()}</p>
+            <p><b>Unit Cost:</b> ₹${unitCost.toLocaleString('en-IN')}</p>
             <p><b>Units Delivered/Sold:</b> ${units}</p>
-            <p><b>Total Amount:</b> ₹${total.toLocaleString()}</p>
-            <p><b>Paid Amount:</b> <span style="color:green; font-weight:bold;">₹${Number(v.Amount_Paid || 0).toLocaleString()}</span></p>
-            <p><b>Balance Pending:</b> <span style="color:red; font-weight:bold;">₹${Number(v.Amount_Pending || 0).toLocaleString()}</span></p>
+            <p><b>Total Amount:</b> ₹${total.toLocaleString('en-IN')}</p>
+            <p><b>Paid Amount:</b> <span style="color:green; font-weight:bold;">₹${Number(v.Amount_Paid || 0).toLocaleString('en-IN')}</span></p>
+            <p><b>Balance Pending:</b> <span style="color:red; font-weight:bold;">₹${Number(v.Amount_Pending || 0).toLocaleString('en-IN')}</span></p>
             <button class="btn btn-primary" style="margin-top:1rem;" onclick='closeModal(); editVendor(${JSON.stringify(v)});'>
                 <i class="fa-solid fa-pen"></i> Edit Vendor Info
             </button>
@@ -444,7 +445,7 @@ function showDashboardDetails(type) {
                     <tr style="border-bottom:1px solid #eee;">
                         <td style="padding:8px;">#${f.ID}</td>
                         <td style="padding:8px;"><b>${name}</b></td>
-                        <td style="padding:8px;">₹${Number(f.Total_Fund || 0).toLocaleString()}</td>
+                        <td style="padding:8px;">₹${Number(f.Total_Fund || 0).toLocaleString('en-IN')}</td>
                         <td style="padding:8px;">
                             <button class="btn btn-action btn-primary" onclick='closeModal(); switchTab("funders", document.querySelectorAll(".nav-item")[1]); editFunder(${JSON.stringify(f)});'><i class="fa-solid fa-pen"></i></button>
                         </td>
@@ -481,7 +482,7 @@ function showDashboardDetails(type) {
                         <td style="padding:8px;"><span class="badge" style="background:#e0e7ff; color:#3730a3;">Vendor</span></td>
                         <td style="padding:8px;"><b>${v.Vendor_Name}</b></td>
                         <td style="padding:8px;">${funder || 'N/A'}</td>
-                        <td style="padding:8px; color:${type === 'expenses' ? 'green' : 'red'}; font-weight:bold;">₹${amt.toLocaleString()}</td>
+                        <td style="padding:8px; color:${type === 'expenses' ? 'green' : 'red'}; font-weight:bold;">₹${amt.toLocaleString('en-IN')}</td>
                         <td style="padding:8px;">
                             <button class="btn btn-action btn-primary" onclick='closeModal(); switchTab("vendors", document.querySelectorAll(".nav-item")[3]); editVendor(${JSON.stringify(v)});'><i class="fa-solid fa-pen"></i></button>
                         </td>
@@ -507,7 +508,7 @@ function showDashboardDetails(type) {
                         <td style="padding:8px;"><span class="badge" style="background:#fef3c7; color:#92400e;">Activity</span></td>
                         <td style="padding:8px;"><b>${a.Vendor_Name || a.Category}</b><br><small>${a.Description || ''}</small></td>
                         <td style="padding:8px;">${funder || 'N/A'}</td>
-                        <td style="padding:8px; color:${type === 'expenses' ? 'green' : 'red'}; font-weight:bold;">₹${amt.toLocaleString()}</td>
+                        <td style="padding:8px; color:${type === 'expenses' ? 'green' : 'red'}; font-weight:bold;">₹${amt.toLocaleString('en-IN')}</td>
                         <td style="padding:8px;">
                             <button class="btn btn-action btn-primary" onclick='closeModal(); switchTab("activities", document.querySelectorAll(".nav-item")[4]); editActivity(${JSON.stringify(a)});'><i class="fa-solid fa-pen"></i></button>
                         </td>
@@ -528,7 +529,6 @@ function closeModal() {
     document.getElementById('detailsModal').style.display = 'none';
 }
 
-// Modal-க்கு வெளியே கிளிக் செய்தாலும் Close ஆகும்
 window.onclick = function(event) {
     const modal = document.getElementById('detailsModal');
     if (event.target === modal) {
