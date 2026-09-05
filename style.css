@@ -517,7 +517,7 @@ tr:last-child td {
     border-bottom: none; 
 }
 
-/* Modal Styling */
+/* Modal Styling - Fixed for Scroll & Close Button */
 .modal {
     display: none;
     position: fixed;
@@ -530,26 +530,36 @@ tr:last-child td {
     justify-content: center;
     align-items: center;
     z-index: 1000;
+    padding: 20px;
 }
 
 .modal-content {
     background: #fff;
     padding: 2rem;
     border-radius: var(--radius);
-    width: 90%;
-    max-width: 600px;
+    width: 100%;
+    max-width: 650px;
+    max-height: 85vh; /* திரைக்குள்ளே அடங்குவதற்காக */
+    overflow-y: auto;  /* Content அதிகமானால் Scroll செய்ய வசதி */
     position: relative;
     box-shadow: var(--shadow-lg);
     animation: fadeIn 0.2s ease-in-out;
 }
 
 .close-btn {
-    position: absolute;
-    top: 1rem;
-    right: 1.5rem;
+    position: sticky;
+    top: 0;
+    float: right;
     font-size: 1.8rem;
+    font-weight: bold;
     cursor: pointer;
     color: var(--text-muted);
+    z-index: 10;
+    line-height: 1;
+}
+
+.close-btn:hover {
+    color: var(--text-dark);
 }
 
 /* Toast Notifications */
