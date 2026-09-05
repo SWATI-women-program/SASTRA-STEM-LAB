@@ -25,8 +25,6 @@ async function fetchData() {
         calculateMetrics();
         renderTablesAndCards();
         renderChart();
-        
-        // Auto ID-க்களை செட் செய்யும் பகுதி
         setNextIDs();
 
     } catch (e) {
@@ -35,7 +33,6 @@ async function fetchData() {
     }
 }
 
-// அடுத்தடுத்த ID-களை தானாகவே படிவங்களில் அமைக்கும் செயல்பாடு
 function setNextIDs() {
     if (globalData.funders && globalData.funders.length) {
         document.getElementById('funderId').value = Math.max(...globalData.funders.map(f => Number(f.ID) || 0)) + 1;
@@ -257,7 +254,7 @@ function renderVendorGrid(vendorsList) {
     vendorContainer.innerHTML = '';
 
     if (vendorsList.length === 0) {
-        vendorContainer.innerHTML = `<div style="grid-column: 1/-1; text-align:center; color:#666; padding:2rem;">தேர்ந்தெடுக்கப்பட்ட CSR / Year-ல் எந்த Vendor பதிவும் இல்லை.</div>`;
+        vendorContainer.innerHTML = `<div style="grid-column: 1/-1; text-align:center; color:#666; padding:2rem;">No vendor registration for the selected CSR/Year.</div>`;
         return;
     }
 
@@ -295,7 +292,7 @@ function renderActivityGrid(activitiesList) {
     container.innerHTML = '';
 
     if (!activitiesList || activitiesList.length === 0) {
-        container.innerHTML = `<div style="grid-column: 1/-1; text-align:center; color:#666; padding:2rem;">எந்த Activity பதிவும் இல்லை.</div>`;
+        container.innerHTML = `<div style="grid-column: 1/-1; text-align:center; color:#666; padding:2rem;">No activity records.</div>`;
         return;
     }
 
