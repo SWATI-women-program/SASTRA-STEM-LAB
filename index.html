@@ -39,6 +39,9 @@
             <li class="nav-item" onclick="switchTab('activities', this)">
                 <i class="fa-solid fa-list-check"></i> <span>Activities</span>
             </li>
+            <li class="nav-item" onclick="switchTab('csr-balances', this)">
+                <i class="fa-solid fa-wallet"></i> <span>SASTRA CSR</span>
+            </li>
         </ul>
     </aside>
 
@@ -368,6 +371,24 @@
             <div class="school-grid" id="activityContainer"></div>
         </section>
 
+        <section id="csr-balances" class="tab-content">
+    <div class="content-header">
+        <div>
+            <h1>CSR Fund Balances</h1>
+            <p>Track remaining funds from company CSR contributions available for school deployment.</p>
+        </div>
+    </div>
+
+    <div class="school-grid" id="csrBalancesContainer"></div>
+</section>
+
+        <div class="form-group">
+    <label>Select CSR Funder Pool</label>
+    <select id="actFunderId" required>
+        <option value="">Select Funder</option>
+    </select>
+</div>
+        
     </main>
 
     <div id="detailsModal" class="modal">
