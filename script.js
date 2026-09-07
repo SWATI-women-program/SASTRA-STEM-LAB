@@ -1,5 +1,5 @@
 // Google Apps Script Web App URL
-const API_URL = "https://script.google.com/macros/s/AKfycbwQKIBKuZUFN2Ezog3BDOeRen5Tm1a6WHVpShVO1dSpwirtHh1odnkoEwzAr0JmBi2N/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxwwfj2lz8RZA81amrGzHnGchiubY-BmxQnUW3bt_5jGmb0cZnbNkV0Z1fNm4fYRFsd/exec";
 
 let globalData = { funders: [], schools: [], vendors: [], activities: [], disbursements: [] };
 let chartInstance = null;
@@ -327,14 +327,13 @@ function renderDisbursementTable(list) {
     }
 
     list.forEach(d => {
+        const category = d.Category || d["Category"] || d.Description || '-';
         tbody.innerHTML += `
             <tr>
                 <td>#${d.ID}</td>
                 <td><b>${d.School_Name || d["School Name"] || '-'}</b></td>
                 <td>${d.Funder_Name || d["Funder Name"] || '-'}</td>
-                <td>₹${Number(d.Amount || 0).toLocaleString('en-IN')}</td>
-                <td>${d.Date ? String(d.Date).split('T')[0] : '-'}</td>
-                <td>${d.Description || '-'}</td>
+                <td><span class="badge">${category}</span></td>
                 <td>
                     <button class="btn btn-action btn-primary" onclick='editDisbursement(${JSON.stringify(d)})'><i class="fa-solid fa-pen"></i></button>
                 </td>
@@ -347,27 +346,16 @@ function editDisbursement(d) {
     document.getElementById('csrId').value = d.ID;
     document.getElementById('csrSchoolSelect').value = d.School_Name || d["School Name"] || '';
     document.getElementById('csrFunderSelect').value = d.Funder_Name || d["Funder Name"] || '';
-    document.getElementById('csrAmount').value = d.Amount || '';
-    document.getElementById('csrDate').value = d.Date ? String(d.Date).split('T')[0] : '';
-    document.getElementById('csrDescription').value = d.Description || '';
+    document.getElementById('csrCategory').value = d.Category || d["Category"] || 'STEM Kits Only';
     showSelectedCSRBalance();
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 async function saveDisbursementData() {
-    const amount = Number(document.getElementById('csrAmount').value) || 0;
+    // Amount ku badhila Category (STEM Kits / Furniture / System) select pannuvom -
+    // exact ரூபாய் amount ஒவ்வொரு school ku ethuna theriyathu, so balance-oda check panna vendam.
+    // Balance already Vendor tab la (SASTRA CSR ku vaanga item cost) irundhe automatic ah deduct aagum.
     const funderName = document.getElementById('csrFunderSelect').value;
-    const f = (globalData.funders || []).find(x => (x.Funder_Name || x["Funder Name"]) === funderName);
-
-    if (f) {
-        const totalFund = Number(f.Total_Fund || f["Total Fund"] || 0);
-        const used = getFunderUsedAmount(funderName);
-        const available = totalFund - used;
-        if (amount > available) {
-            showToast(`"${funderName}" la ₹${available.toLocaleString('en-IN')} mattum thaan balance iruku!`, "error");
-            return;
-        }
-    }
 
     const payload = {
         action: "saveDisbursement",
@@ -375,9 +363,8 @@ async function saveDisbursementData() {
             ID: document.getElementById('csrId').value,
             School_Name: document.getElementById('csrSchoolSelect').value,
             Funder_Name: funderName,
-            Amount: document.getElementById('csrAmount').value,
-            Date: document.getElementById('csrDate').value,
-            Description: document.getElementById('csrDescription').value
+            Category: document.getElementById('csrCategory').value,
+            Amount: 0
         }
     };
     await sendData(payload, 'csrForm');
