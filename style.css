@@ -538,7 +538,7 @@ tr:last-child td {
     border-radius: var(--radius);
     width: 90%;
     max-width: 650px;
-    max-height: 85vh; /* Screen-க்கு ஏற்றவாறு உயரம் அமைக்கும் */
+    max-height: 85vh;
     display: flex;
     flex-direction: column;
     box-shadow: var(--shadow-lg);
@@ -574,7 +574,7 @@ tr:last-child td {
 
 .modal-body {
     padding: 1.5rem;
-    overflow-y: auto; /* Modal-க்குள்ளேயே Scroll ஆகும் */
+    overflow-y: auto;
     flex: 1;
 }
 
