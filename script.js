@@ -139,7 +139,6 @@ function calculateMetrics() {
 
     const balance = totalFund - totalExpense;
 
-    // Indian Standard (en-IN) Formatting Applied Here
     document.getElementById('totalFund').innerText = '₹' + totalFund.toLocaleString('en-IN');
     document.getElementById('totalExpense').innerText = '₹' + totalExpense.toLocaleString('en-IN');
     document.getElementById('balance').innerText = '₹' + balance.toLocaleString('en-IN');
@@ -200,9 +199,60 @@ function renderTablesAndCards() {
         });
     }
 
+    renderCSRBalances();
     renderSchoolGrid(globalData.schools || []);
     renderVendorGrid(globalData.vendors || []);
     renderActivityGrid(globalData.activities || []);
+}
+
+function renderCSRBalances() {
+    const container = document.getElementById('csrBalancesContainer');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    if (!globalData.funders || globalData.funders.length === 0) {
+        container.innerHTML = `<div style="grid-column: 1/-1; text-align:center; color:#666; padding:2rem;">No CSR Funders registered yet.</div>`;
+        return;
+    }
+
+    globalData.funders.forEach(funder => {
+        const name = funder.Funder_Name || funder.funder_name || funder["Funder Name"];
+        const totalFund = Number(funder.Total_Fund || funder["Total Fund"] || 0);
+
+        let vendorSpent = 0;
+        globalData.vendors.forEach(v => {
+            const vFunder = v.Funder_Name || v.funder_name || v["Funder Name"];
+            if (vFunder === name) {
+                vendorSpent += Number(v.Amount_Paid || v["Amount Paid"] || 0);
+            }
+        });
+
+        let activitySpent = 0;
+        (globalData.activities || []).forEach(a => {
+            const aFunder = a.Funder_Name || a.funder_name || a["Funder Name"];
+            if (aFunder === name) {
+                activitySpent += Number(a.Amount_Paid || a["Amount Paid"] || 0);
+            }
+        });
+
+        const totalSpent = vendorSpent + activitySpent;
+        const balance = totalFund - totalSpent;
+
+        container.innerHTML += `
+            <div class="school-card">
+                <div class="school-card-body">
+                    <span class="badge" style="background:#e0e7ff; color:#3730a3;">SASTRA CSR Pool</span>
+                    <h3>${name}</h3>
+                    <hr style="margin: 0.8rem 0; border: 0; border-top: 1px solid var(--border-color);">
+                    <div class="school-info">Total Received: <b>₹${totalFund.toLocaleString('en-IN')}</b></div>
+                    <div class="school-info">Vendor Expenses: <b style="color:#ef4444;">₹${vendorSpent.toLocaleString('en-IN')}</b></div>
+                    <div class="school-info">Activity Expenses: <b style="color:#ef4444;">₹${activitySpent.toLocaleString('en-IN')}</b></div>
+                    <div class="school-info" style="font-size:1rem; margin-top:0.8rem;">Available CSR Balance: <b style="color:${balance >= 0 ? '#10b981' : '#ef4444'};">₹${balance.toLocaleString('en-IN')}</b></div>
+                </div>
+            </div>
+        `;
+    });
 }
 
 function getDirectImageUrl(url) {
@@ -481,7 +531,7 @@ function showDashboardDetails(type) {
                         <td style="padding:8px;">${funder || 'N/A'}</td>
                         <td style="padding:8px; color:${type === 'expenses' ? 'green' : 'red'}; font-weight:bold;">₹${amt.toLocaleString('en-IN')}</td>
                         <td style="padding:8px;">
-                            <button class="btn btn-action btn-primary" onclick='closeModal(); switchTab("vendors", document.querySelectorAll(".nav-item")[3]); editVendor(${JSON.stringify(v)});'><i class="fa-solid fa-pen"></i></button>
+                            <button class="btn btn-action btn-primary" onclick='closeModal(); switchTab("vendors", document.querySelectorAll(".nav-item")[4]); editVendor(${JSON.stringify(v)});'><i class="fa-solid fa-pen"></i></button>
                         </td>
                     </tr>
                 `;
@@ -507,7 +557,7 @@ function showDashboardDetails(type) {
                         <td style="padding:8px;">${funder || 'N/A'}</td>
                         <td style="padding:8px; color:${type === 'expenses' ? 'green' : 'red'}; font-weight:bold;">₹${amt.toLocaleString('en-IN')}</td>
                         <td style="padding:8px;">
-                            <button class="btn btn-action btn-primary" onclick='closeModal(); switchTab("activities", document.querySelectorAll(".nav-item")[4]); editActivity(${JSON.stringify(a)});'><i class="fa-solid fa-pen"></i></button>
+                            <button class="btn btn-action btn-primary" onclick='closeModal(); switchTab("activities", document.querySelectorAll(".nav-item")[5]); editActivity(${JSON.stringify(a)});'><i class="fa-solid fa-pen"></i></button>
                         </td>
                     </tr>
                 `;
