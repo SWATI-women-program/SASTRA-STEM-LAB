@@ -1,5 +1,5 @@
 // Google Apps Script Web App URL
-const API_URL = "https://script.google.com/macros/s/AKfycbwQXOTnrVFG5kJLNu7lHTdWTUZWlVZlIY1U7Rzuc0TYpo-BoKps3CZpJc_IBqgJW1LF/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwQKIBKuZUFN2Ezog3BDOeRen5Tm1a6WHVpShVO1dSpwirtHh1odnkoEwzAr0JmBi2N/exec";
 
 let globalData = { funders: [], schools: [], vendors: [], activities: [], disbursements: [] };
 let chartInstance = null;
