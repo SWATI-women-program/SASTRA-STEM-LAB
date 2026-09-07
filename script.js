@@ -79,21 +79,11 @@ function populateDropdowns() {
     globalData.funders.forEach(f => {
         const fName = f.Funder_Name || f.funder_name || f["Funder Name"];
         if(fName) {
-            // ஃபண்டர் பெயருடன் "Internal CSR" சேவையை சேர்க்கிறோம்
             if (filterSelect) filterSelect.innerHTML += `<option value="${fName}">${fName}</option>`;
-            if (schoolFunderSelect) {
-                schoolFunderSelect.innerHTML += `<option value="${fName}">${fName}</option>`;
-                schoolFunderSelect.innerHTML += `<option value="${fName} (Internal CSR)">${fName} (Internal CSR Allocation)</option>`;
-            }
-            if (vendorFunderSelect) {
-                vendorFunderSelect.innerHTML += `<option value="${fName}">${fName}</option>`;
-                vendorFunderSelect.innerHTML += `<option value="${fName} (Internal CSR)">${fName} (Internal CSR Allocation)</option>`;
-            }
+            if (schoolFunderSelect) schoolFunderSelect.innerHTML += `<option value="${fName}">${fName}</option>`;
+            if (vendorFunderSelect) vendorFunderSelect.innerHTML += `<option value="${fName}">${fName}</option>`;
             if (vendorFunderFilter) vendorFunderFilter.innerHTML += `<option value="${fName}">${fName}</option>`;
-            if (actFunderSelect) {
-                actFunderSelect.innerHTML += `<option value="${fName}">${fName}</option>`;
-                actFunderSelect.innerHTML += `<option value="${fName} (Internal CSR)">${fName} (Internal CSR Allocation)</option>`;
-            }
+            if (actFunderSelect) actFunderSelect.innerHTML += `<option value="${fName}">${fName}</option>`;
             if (actFunderFilter) actFunderFilter.innerHTML += `<option value="${fName}">${fName}</option>`;
         }
     });
@@ -122,35 +112,34 @@ function calculateMetrics() {
         }
     });
 
-    // 2. Calculate Vendor Expenses & Internal Allocations
+    // 2. Calculate Vendor Expenses & Pending
     globalData.vendors.forEach(v => {
         const funder = v.Funder_Name || v.funder_name || v["Funder Name"];
-        
-        // வழக்கமான செலவுகள் மற்றும் Internal CSR செலவுகள் இரண்டையும் கணக்கிடும்
-        if (selectedFunder === "ALL" || funder === selectedFunder || funder === `${selectedFunder} (Internal CSR)`) {
+        if (selectedFunder === "ALL" || funder === selectedFunder) {
             totalExpense += Number(v.Amount_Paid || v["Amount Paid"] || 0);
             totalPending += Number(v.Amount_Pending || v["Amount Pending"] || 0);
         }
     });
 
-    // 3. Calculate Activities Expenses & Internal Allocations
+    // 3. Calculate Activities Expenses & Pending
     (globalData.activities || []).forEach(a => {
         const funder = a.Funder_Name || a.funder_name || a["Funder Name"];
-        if (selectedFunder === "ALL" || funder === selectedFunder || funder === `${selectedFunder} (Internal CSR)`) {
+        if (selectedFunder === "ALL" || funder === selectedFunder) {
+            totalExpense += Number(a.Amount_Paid || a["Amount Paid"] || 0);
+            
             const cost = Number(a.Unit_Cost || a["Unit Cost"] || 0);
             const units = Number(a.Units || a["Units"] || 1);
             const total = cost * units;
             const paid = Number(a.Amount_Paid || a["Amount Paid"] || 0);
             const actPending = Number(a.Amount_Pending || a["Amount Pending"] || (total - paid));
 
-            totalExpense += paid;
             totalPending += actPending;
         }
     });
 
-    // மீதி உள்ள தொகை (Available Balance / Internal Fund Surplus)
     const balance = totalFund - totalExpense;
 
+    // Indian Standard (en-IN) Formatting Applied Here
     document.getElementById('totalFund').innerText = '₹' + totalFund.toLocaleString('en-IN');
     document.getElementById('totalExpense').innerText = '₹' + totalExpense.toLocaleString('en-IN');
     document.getElementById('balance').innerText = '₹' + balance.toLocaleString('en-IN');
@@ -158,7 +147,7 @@ function calculateMetrics() {
     
     renderChart();
 }
-
+
 function renderChart() {
     const ctx = document.getElementById('financialChart').getContext('2d');
     const fund = parseFloat(document.getElementById('totalFund').innerText.replace(/[₹,]/g, '')) || 0;
