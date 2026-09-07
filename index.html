@@ -30,6 +30,9 @@
             <li class="nav-item" onclick="switchTab('funders', this)">
                 <i class="fa-solid fa-hand-holding-dollar"></i> <span>Funder Details</span>
             </li>
+            <li class="nav-item" onclick="switchTab('csr-balances', this)">
+                <i class="fa-solid fa-wallet"></i> <span>CSR Balances</span>
+            </li>
             <li class="nav-item" onclick="switchTab('schools', this)">
                 <i class="fa-solid fa-school"></i> <span>Schools</span>
             </li>
@@ -38,9 +41,6 @@
             </li>
             <li class="nav-item" onclick="switchTab('activities', this)">
                 <i class="fa-solid fa-list-check"></i> <span>Activities</span>
-            </li>
-            <li class="nav-item" onclick="switchTab('csr-balances', this)">
-                <i class="fa-solid fa-wallet"></i> <span>SASTRA CSR</span>
             </li>
         </ul>
     </aside>
@@ -168,6 +168,13 @@
                     <tbody></tbody>
                 </table>
             </div>
+        </section>
+
+        <section id="csr-balances" class="tab-content">
+            <div class="page-header">
+                <h2 class="page-title">SASTRA CSR Balances Pool</h2>
+            </div>
+            <div class="school-grid" id="csrBalancesContainer"></div>
         </section>
 
         <section id="schools" class="tab-content">
@@ -336,7 +343,7 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>Associated Funder *</label>
+                            <label>Deduct From CSR Funder *</label>
                             <select id="actFunderSelect" required></select>
                         </div>
                         <div class="form-group">
@@ -371,35 +378,17 @@
             <div class="school-grid" id="activityContainer"></div>
         </section>
 
-        <section id="csr-balances" class="tab-content">
-    <div class="content-header">
-        <div>
-            <h1>CSR Fund Balances</h1>
-            <p>Track remaining funds from company CSR contributions available for school deployment.</p>
-        </div>
-    </div>
-
-    <div class="school-grid" id="csrBalancesContainer"></div>
-</section>
-
-        <div class="form-group">
-    <label>Select CSR Funder Pool</label>
-    <select id="actFunderId" required>
-        <option value="">Select Funder</option>
-    </select>
-</div>
-        
     </main>
 
     <div id="detailsModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2 id="modalTitle"></h2>
-            <span onclick="closeModal()" class="close-btn">&times;</span>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle"></h2>
+                <span onclick="closeModal()" class="close-btn">&times;</span>
+            </div>
+            <div id="modalBody" class="modal-body"></div>
         </div>
-        <div id="modalBody" class="modal-body"></div>
     </div>
-</div>
 
     <div id="toastContainer" class="toast-container"></div>
 
