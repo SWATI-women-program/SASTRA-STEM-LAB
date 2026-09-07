@@ -39,6 +39,9 @@
             <li class="nav-item" onclick="switchTab('activities', this)">
                 <i class="fa-solid fa-list-check"></i> <span>Activities</span>
             </li>
+            <li class="nav-item" onclick="switchTab('sastracsr', this)">
+                <i class="fa-solid fa-building-columns"></i> <span>SASTRA CSR</span>
+            </li>
         </ul>
     </aside>
 
@@ -366,6 +369,67 @@
             </div>
 
             <div class="school-grid" id="activityContainer"></div>
+        </section>
+
+        <section id="sastracsr" class="tab-content">
+            <div class="page-header">
+                <h2 class="page-title">SASTRA CSR - Fund Allocation to Schools</h2>
+            </div>
+
+            <div class="metrics-grid" id="csrBalanceContainer">
+                <!-- Individual CSR / Funder balance cards render here -->
+            </div>
+
+            <div class="form-card">
+                <h3><i class="fa-solid fa-hand-holding-heart"></i> Give CSR Amount to a School</h3>
+                <form id="csrForm" onsubmit="event.preventDefault(); saveDisbursementData();">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Disbursement ID *</label>
+                            <input type="number" id="csrId" placeholder="e.g., 1" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Select School *</label>
+                            <select id="csrSchoolSelect" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Which CSR (Funder) to Deduct From *</label>
+                            <select id="csrFunderSelect" required onchange="showSelectedCSRBalance()"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Amount to Give (₹) *</label>
+                            <input type="number" id="csrAmount" placeholder="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Date</label>
+                            <input type="date" id="csrDate">
+                        </div>
+                        <div class="form-group">
+                            <label>Purpose / Description</label>
+                            <input type="text" id="csrDescription" placeholder="e.g., Lab Kits for School">
+                        </div>
+                    </div>
+                    <p id="csrBalanceHint" style="margin-top:0.9rem; font-weight:700; color:var(--text-muted);"></p>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save & Deduct from CSR</button>
+                </form>
+            </div>
+
+            <div class="table-container">
+                <table id="csrTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>School</th>
+                            <th>CSR (Funder)</th>
+                            <th>Amount (₹)</th>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
         </section>
 
     </main>
