@@ -28,10 +28,7 @@
                 <i class="fa-solid fa-chart-pie"></i> <span>Dashboard</span>
             </li>
             <li class="nav-item" onclick="switchTab('funders', this)">
-                <i class="fa-solid fa-hand-holding-dollar"></i> <span>Funder Details</span>
-            </li>
-            <li class="nav-item" onclick="switchTab('csr-balances', this)">
-                <i class="fa-solid fa-wallet"></i> <span>CSR Balances</span>
+                <i class="fa-solid fa-hand-holding-dollar"></i> <span>Funders (CSR)</span>
             </li>
             <li class="nav-item" onclick="switchTab('schools', this)">
                 <i class="fa-solid fa-school"></i> <span>Schools</span>
@@ -40,319 +37,239 @@
                 <i class="fa-solid fa-truck-field"></i> <span>Vendors</span>
             </li>
             <li class="nav-item" onclick="switchTab('activities', this)">
-                <i class="fa-solid fa-list-check"></i> <span>Activities</span>
+                <i class="fa-solid fa-list-check"></i> <span>Activity Tracking</span>
+            </li>
+            <li class="nav-item" onclick="switchTab('sastra-csr', this)">
+                <i class="fa-solid fa-building-columns"></i> <span>SASTRA CSR</span>
             </li>
         </ul>
     </aside>
 
     <main class="main-content">
-
+        
         <header class="top-header">
             <div class="header-title">
-                <h1>CSR Dashboard</h1>
-                <p>SASTRA STEM LAB Implementation & Management System</p>
+                <h1 id="pageTitle">Dashboard Overview</h1>
+                <p>Welcome back, Admin</p>
             </div>
-            
-            <div class="logo-container" style="background: transparent; border: none; box-shadow: none; border-radius: 0; padding: 0;">
-                <div class="logo-wrapper" title="SASTRA University" style="width: auto; height: auto; border-radius: 0; background: transparent; border: none; box-shadow: none; padding: 0;">
-                    <img src="SASTRA.png" alt="SASTRA Logo" onerror="this.onerror=null; this.src='SASTRA.jpg';" style="height: 48px; border-radius: 0;">
-                </div>
-                <div class="logo-divider" style="width: 1px; height: 32px; background: #cbd5e1;"></div>
-                <div class="logo-wrapper" title="FIRST" style="width: auto; height: auto; border-radius: 0; background: transparent; border: none; box-shadow: none; padding: 0;">
-                    <img src="FIRST.png" alt="FIRST Logo" onerror="this.onerror=null; this.src='FIRST.jpg';" style="height: 48px; border-radius: 0;">
-                </div>
+            <div class="header-actions">
+                <button class="btn btn-secondary" onclick="fetchData()"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
             </div>
         </header>
 
         <section id="dashboard" class="tab-content active">
-            <div class="page-header">
-                <h2 class="page-title">Dashboard Overview</h2>
-                <div class="filter-group">
-                    <label for="funderFilter"><i class="fa-solid fa-filter"></i> Funder:</label>
-                    <select id="funderFilter" onchange="calculateMetrics()">
-                        <option value="ALL">All Funders Overview</option>
-                    </select>
-                </div>
-            </div>
-
             <div class="metrics-grid">
-                <div class="metric-card primary" onclick="showDashboardDetails('totalFund')">
-                    <div class="metric-header">
-                        <h3>Total Fund Received</h3>
-                        <div class="icon-box"><i class="fa-solid fa-wallet"></i></div>
+                <div class="metric-card">
+                    <div class="metric-icon blue"><i class="fa-solid fa-wallet"></i></div>
+                    <div class="metric-data">
+                        <h3>Total CSR Fund Received</h3>
+                        <p id="dashTotalFund">₹0</p>
                     </div>
-                    <p id="totalFund">₹0</p>
                 </div>
-                <div class="metric-card danger" onclick="showDashboardDetails('expenses')">
-                    <div class="metric-header">
-                        <h3>Total Expenses</h3>
-                        <div class="icon-box"><i class="fa-solid fa-receipt"></i></div>
+                <div class="metric-card">
+                    <div class="metric-icon green"><i class="fa-solid fa-money-bill-wave"></i></div>
+                    <div class="metric-data">
+                        <h3>Total Spent Amount</h3>
+                        <p id="dashTotalSpent">₹0</p>
                     </div>
-                    <p id="totalExpense">₹0</p>
                 </div>
-                <div class="metric-card success">
-                    <div class="metric-header">
-                        <h3>Available Balance</h3>
-                        <div class="icon-box"><i class="fa-solid fa-piggy-bank"></i></div>
+                <div class="metric-card">
+                    <div class="metric-icon yellow"><i class="fa-solid fa-piggy-bank"></i></div>
+                    <div class="metric-data">
+                        <h3>Remaining CSR Balance</h3>
+                        <p id="dashTotalBalance">₹0</p>
                     </div>
-                    <p id="balance">₹0</p>
                 </div>
-                <div class="metric-card warning" onclick="showDashboardDetails('pending')">
-                    <div class="metric-header">
-                        <h3>Vendor Pending</h3>
-                        <div class="icon-box"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                <div class="metric-card">
+                    <div class="metric-icon red"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                    <div class="metric-data">
+                        <h3>Total Pending Payment</h3>
+                        <p id="dashTotalPending">₹0</p>
                     </div>
-                    <p id="vendorPending">₹0</p>
                 </div>
             </div>
 
-            <div class="chart-section">
-                <div class="chart-card">
-                    <h3>Financial Analytics Overview</h3>
+            <div class="dashboard-charts">
+                <div class="card chart-card">
+                    <h3>Funder Balance Distribution</h3>
                     <div class="chart-container">
-                        <canvas id="financialChart"></canvas>
+                        <canvas id="funderChart"></canvas>
                     </div>
                 </div>
             </div>
         </section>
 
         <section id="funders" class="tab-content">
-            <div class="page-header">
-                <h2 class="page-title">Funder Management</h2>
-                <button class="btn btn-secondary" onclick="exportToCSV('funderTable', 'Funders_Report')">
-                    <i class="fa-solid fa-file-csv"></i> Export CSV
-                </button>
-            </div>
-
-            <div class="form-card">
-                <h3><i class="fa-solid fa-pen-to-square"></i> Add / Update Funder Details</h3>
-                <form id="funderForm" onsubmit="event.preventDefault(); saveFunderData();">
+            <div class="card form-card">
+                <h3>Add New CSR Funder</h3>
+                <form id="funderForm" onsubmit="handleFunderSubmit(event)">
                     <div class="form-grid">
                         <div class="form-group">
-                            <label>Funder ID *</label>
-                            <input type="number" id="funderId" placeholder="e.g., 1" required>
+                            <label>Funder ID</label>
+                            <input type="text" id="funderId" readonly placeholder="Auto Generated">
                         </div>
                         <div class="form-group">
-                            <label>Funder / Company Name *</label>
-                            <input type="text" id="funderName" placeholder="e.g., PAYPAL CSR" required>
+                            <label>Company / Organization Name</label>
+                            <input type="text" id="funderName" required placeholder="e.g. TCS Foundation">
                         </div>
                         <div class="form-group">
-                            <label>Confirmed Date</label>
-                            <input type="date" id="funderConfirmDate">
-                        </div>
-                        <div class="form-group">
-                            <label>Received Date</label>
-                            <input type="date" id="funderReceivedDate">
-                        </div>
-                        <div class="form-group">
-                            <label>Total Fund Amount (₹) *</label>
-                            <input type="number" id="funderTotalAmount" placeholder="0" required>
+                            <label>Total Committed Amount (₹)</label>
+                            <input type="number" id="funderAmount" required placeholder="1000000">
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save Funder Details</button>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save Funder</button>
                 </form>
             </div>
 
-            <div class="table-container">
-                <table id="funderTable">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Funder Name</th>
-                            <th>Confirmed Date</th>
-                            <th>Received Date</th>
-                            <th>Total Fund (₹)</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+            <div class="card table-card">
+                <div class="table-header">
+                    <h3>Funder List</h3>
+                    <button class="btn btn-sm btn-outline" onclick="exportToCSV('funderTable', 'CSR_Funders')"><i class="fa-solid fa-download"></i> Export CSV</button>
+                </div>
+                <div class="table-responsive">
+                    <table id="funderTable">
+                        <thead>
+                            <tr>
+                                <th>Funder ID</th>
+                                <th>Funder Name</th>
+                                <th>Total Fund (₹)</th>
+                                <th>Spent (₹)</th>
+                                <th>Balance (₹)</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="funderTableBody"></tbody>
+                    </table>
+                </div>
             </div>
-        </section>
-
-        <section id="csr-balances" class="tab-content">
-            <div class="page-header">
-                <h2 class="page-title">SASTRA CSR Balances Pool</h2>
-            </div>
-            <div class="school-grid" id="csrBalancesContainer"></div>
         </section>
 
         <section id="schools" class="tab-content">
-            <div class="page-header">
-                <h2 class="page-title">School Implementation</h2>
-                <div class="search-bar">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" id="schoolSearch" placeholder="Search school name or ID..." onkeyup="filterSchools()">
-                </div>
-            </div>
-
-            <div class="form-card">
-                <h3><i class="fa-solid fa-pen-to-square"></i> Add / Update School Details</h3>
-                <form id="schoolForm" onsubmit="event.preventDefault(); saveSchoolData();">
+            <div class="card form-card">
+                <h3>Add New School</h3>
+                <form id="schoolForm" onsubmit="handleSchoolSubmit(event)">
                     <div class="form-grid">
                         <div class="form-group">
-                            <label>School ID *</label>
-                            <input type="number" id="schoolId" placeholder="e.g., 1" required>
+                            <label>School ID</label>
+                            <input type="text" id="schoolId" readonly placeholder="Auto Generated">
                         </div>
                         <div class="form-group">
-                            <label>School Name *</label>
-                            <input type="text" id="schoolName" placeholder="School Name" required>
+                            <label>School Name</label>
+                            <input type="text" id="schoolName" required placeholder="Govt Higher Sec School">
                         </div>
                         <div class="form-group">
-                            <label>Associated Funder *</label>
-                            <select id="schoolFunderSelect" required></select>
+                            <label>District / Location</label>
+                            <input type="text" id="schoolDistrict" required placeholder="Thanjavur">
                         </div>
                         <div class="form-group">
-                            <label>Contact Number *</label>
-                            <input type="tel" id="schoolContact" placeholder="Phone Number" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Implementation Category</label>
-                            <select id="schoolCategory">
-                                <option value="STEM Kits Only">STEM Kits Only</option>
-                                <option value="STEM Kits + System">STEM Kits + System</option>
-                                <option value="STEM Kits + System + Furnitures">STEM Kits + System + Furnitures</option>
-                                <option value="Full Infra + Kits + Systems">Full Infra + Kits + Systems</option>
+                            <label>Assigned Funder</label>
+                            <select id="schoolFunder" required>
+                                <option value="">Select Funder</option>
                             </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Status</label>
-                            <select id="schoolStatus">
-                                <option value="In Progress">In Progress</option>
-                                <option value="Completed">Completed</option>
-                                <option value="Pending">Pending</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Photo URL</label>
-                            <input type="url" id="schoolPhoto" placeholder="https://image-url.com or Drive Link">
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save School Entry</button>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save School</button>
                 </form>
             </div>
 
-            <div class="school-grid" id="schoolContainer"></div>
+            <div class="card table-card">
+                <div class="table-header">
+                    <h3>Registered Schools</h3>
+                    <button class="btn btn-sm btn-outline" onclick="exportToCSV('schoolTable', 'Schools_List')"><i class="fa-solid fa-download"></i> Export CSV</button>
+                </div>
+                <div class="table-responsive">
+                    <table id="schoolTable">
+                        <thead>
+                            <tr>
+                                <th>School ID</th>
+                                <th>School Name</th>
+                                <th>District</th>
+                                <th>Assigned Funder</th>
+                                <th>Total Spent (₹)</th>
+                                <th>Pending (₹)</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="schoolTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
         </section>
 
         <section id="vendors" class="tab-content">
-            <div class="page-header">
-                <h2 class="page-title">Vendor Payment Details</h2>
-                <div class="filter-group">
-                    <div>
-                        <label for="vendorFunderFilter"><i class="fa-solid fa-filter"></i> Funder:</label>
-                        <select id="vendorFunderFilter" onchange="filterVendors()">
-                            <option value="ALL">All Funders</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="vendorYearFilter"><i class="fa-solid fa-calendar"></i> Year:</label>
-                        <select id="vendorYearFilter" onchange="filterVendors()">
-                            <option value="ALL">All Years</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-card">
-                <h3><i class="fa-solid fa-pen-to-square"></i> Add / Update Vendor Details</h3>
-                <form id="vendorForm" onsubmit="event.preventDefault(); saveVendorData();">
+            <div class="card form-card">
+                <h3>Add New Vendor</h3>
+                <form id="vendorForm" onsubmit="handleVendorSubmit(event)">
                     <div class="form-grid">
                         <div class="form-group">
-                            <label>Vendor ID *</label>
-                            <input type="number" id="vendorId" placeholder="e.g., 1" required>
+                            <label>Vendor ID</label>
+                            <input type="text" id="vendorId" readonly placeholder="Auto Generated">
                         </div>
                         <div class="form-group">
-                            <label>Vendor Name *</label>
-                            <input type="text" id="vendorName" placeholder="Vendor Name" required>
+                            <label>Vendor / Supplier Name</label>
+                            <input type="text" id="vendorName" required placeholder="e.g. Robotics Kit Supplies">
                         </div>
                         <div class="form-group">
-                            <label>Associated Funder *</label>
-                            <select id="vendorFunderSelect" required></select>
+                            <label>Category</label>
+                            <input type="text" id="vendorCategory" placeholder="Lab Equipment, Electronics">
                         </div>
                         <div class="form-group">
-                            <label>Financial / Rate Year *</label>
-                            <input type="text" id="vendorYear" placeholder="e.g., 2025-26" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Service / Item Provided</label>
-                            <input type="text" id="vendorService" placeholder="Service Info">
-                        </div>
-                        <div class="form-group">
-                            <label>Unit Cost (₹)</label>
-                            <input type="number" id="vendorUnitCost" placeholder="0" oninput="calculateVendorTotal()">
-                        </div>
-                        <div class="form-group">
-                            <label>Quantity / Units Sold</label>
-                            <input type="number" id="vendorUnits" placeholder="0" oninput="calculateVendorTotal()">
-                        </div>
-                        <div class="form-group">
-                            <label>Amount Paid (₹)</label>
-                            <input type="number" id="vendorPaid" placeholder="0" oninput="calculateVendorTotal()">
-                        </div>
-                        <div class="form-group">
-                            <label>Amount Pending (₹)</label>
-                            <input type="number" id="vendorPendingAmt" placeholder="0" readonly>
+                            <label>Contact Number</label>
+                            <input type="tel" id="vendorContact" placeholder="9876543210">
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save Vendor Entry</button>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save Vendor</button>
                 </form>
             </div>
 
-            <div class="school-grid" id="vendorContainer"></div>
+            <div class="card table-card">
+                <div class="table-header">
+                    <h3>Vendor Directory</h3>
+                    <button class="btn btn-sm btn-outline" onclick="exportToCSV('vendorTable', 'Vendor_List')"><i class="fa-solid fa-download"></i> Export CSV</button>
+                </div>
+                <div class="table-responsive">
+                    <table id="vendorTable">
+                        <thead>
+                            <tr>
+                                <th>Vendor ID</th>
+                                <th>Vendor Name</th>
+                                <th>Category</th>
+                                <th>Contact</th>
+                                <th>Total Paid (₹)</th>
+                                <th>Total Pending (₹)</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vendorTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
         </section>
 
         <section id="activities" class="tab-content">
-            <div class="page-header">
-                <h2 class="page-title">Activity & Event Expenses</h2>
-                <div class="filter-group">
-                    <div>
-                        <label for="activityFunderFilter"><i class="fa-solid fa-filter"></i> Funder:</label>
-                        <select id="activityFunderFilter" onchange="filterActivities()">
-                            <option value="ALL">All Funders</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="activityCategoryFilter"><i class="fa-solid fa-layer-group"></i> Category:</label>
-                        <select id="activityCategoryFilter" onchange="filterActivities()">
-                            <option value="ALL">All Categories</option>
-                            <option value="Events & Monitoring">Events & Monitoring</option>
-                            <option value="Travel & Accommodation">Travel & Accommodation</option>
-                            <option value="Food & Refreshments">Food & Refreshments</option>
-                            <option value="Training & Workshops">Training & Workshops</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-card">
-                <h3><i class="fa-solid fa-pen-to-square"></i> Add / Update Activity Detail</h3>
-                <form id="activityForm" onsubmit="event.preventDefault(); saveActivityData();">
+            <div class="card form-card">
+                <h3>Add Expense / Activity Record</h3>
+                <form id="activityForm" onsubmit="handleActivitySubmit(event)">
                     <div class="form-grid">
                         <div class="form-group">
-                            <label>Activity ID *</label>
-                            <input type="number" id="actId" placeholder="e.g., 1" required>
+                            <label>Activity ID</label>
+                            <input type="text" id="actId" readonly placeholder="Auto Generated">
                         </div>
                         <div class="form-group">
-                            <label>Category *</label>
-                            <select id="actCategory" required>
-                                <option value="Events & Monitoring">Events & Monitoring</option>
-                                <option value="Travel & Accommodation">Travel & Accommodation</option>
-                                <option value="Food & Refreshments">Food & Refreshments</option>
-                                <option value="Training & Workshops">Training & Workshops</option>
+                            <label>Target School</label>
+                            <select id="actSchool" required>
+                                <option value="">Select School</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>Deduct From CSR Funder *</label>
-                            <select id="actFunderSelect" required></select>
+                            <label>Vendor</label>
+                            <select id="actVendor" required>
+                                <option value="">Select Vendor</option>
+                            </select>
                         </div>
                         <div class="form-group">
-                            <label>Vendor / Service Provider *</label>
-                            <input type="text" id="actVendor" placeholder="e.g., Chendur Velan Ventures" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Activity Description *</label>
-                            <input type="text" id="actDescription" placeholder="e.g., Tea & Lunch / Travel" required>
+                            <label>Activity Description / Item</label>
+                            <input type="text" id="actDesc" required placeholder="3D Printer Purchase">
                         </div>
                         <div class="form-group">
                             <label>Unit Cost (₹)</label>
@@ -376,6 +293,77 @@
             </div>
 
             <div class="school-grid" id="activityContainer"></div>
+        </section>
+
+        <section id="sastra-csr" class="tab-content">
+            <div class="metrics-grid" style="margin-bottom: 2rem;">
+                <div class="metric-card">
+                    <div class="metric-icon yellow"><i class="fa-solid fa-building-columns"></i></div>
+                    <div class="metric-data">
+                        <h3>Total Pool CSR Balance</h3>
+                        <p id="sastraTotalPool">₹0</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card form-card">
+                <h3>Allocate SASTRA CSR Fund to School</h3>
+                <form id="sastraCsrForm" onsubmit="handleSastraCsrSubmit(event)">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Select Funder (Balance Source)</label>
+                            <select id="sastraFunderSource" required onchange="updateSastraFunderBalance()">
+                                <option value="">Choose Funder</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Available Fund Balance (₹)</label>
+                            <input type="text" id="sastraAvailableBalance" readonly placeholder="₹0">
+                        </div>
+                        <div class="form-group">
+                            <label>Target School</label>
+                            <select id="sastraSchool" required>
+                                <option value="">Select School</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Vendor / Expense Type</label>
+                            <select id="sastraVendor" required>
+                                <option value="">Select Vendor</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Expense Description</label>
+                            <input type="text" id="sastraDesc" required placeholder="e.g. SASTRA Sponsored Kit">
+                        </div>
+                        <div class="form-group">
+                            <label>Amount Spent (₹)</label>
+                            <input type="number" id="sastraAmountSpent" required placeholder="50000">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-hand-holding-hand"></i> Allocate & Record Expense</button>
+                </form>
+            </div>
+
+            <div class="card table-card" style="margin-top: 1.5rem;">
+                <div class="table-header">
+                    <h3>Funder-wise Available Balances</h3>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Funder ID</th>
+                                <th>Funder Name</th>
+                                <th>Committed Fund (₹)</th>
+                                <th>Spent (₹)</th>
+                                <th>Available CSR Balance (₹)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sastraFunderTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
         </section>
 
     </main>
