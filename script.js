@@ -1,7 +1,7 @@
 // Google Apps Script Web App URL
 const API_URL = "https://script.google.com/macros/s/AKfycbwQXOTnrVFG5kJLNu7lHTdWTUZWlVZlIY1U7Rzuc0TYpo-BoKps3CZpJc_IBqgJW1LF/exec";
 
-let globalData = { funders: [], schools: [], vendors: [], activities: [] };
+let globalData = { funders: [], schools: [], vendors: [], activities: [], disbursements: [] };
 let chartInstance = null;
 
 window.onload = function() {
@@ -19,13 +19,23 @@ function switchTab(tabId, element) {
 async function fetchData() {
     try {
         const response = await fetch(API_URL);
-        globalData = await response.json();
+        const data = await response.json();
+
+        // Safe defaults - disbursements sheet oda data varala na kooda error varaadhu
+        globalData = {
+            funders: data.funders || [],
+            schools: data.schools || [],
+            vendors: data.vendors || [],
+            activities: data.activities || [],
+            disbursements: data.disbursements || []
+        };
 
         populateDropdowns();
         calculateMetrics();
         renderTablesAndCards();
         renderChart();
         setNextIDs();
+        showSelectedCSRBalance();
 
     } catch (e) {
         console.error(e);
@@ -57,6 +67,12 @@ function setNextIDs() {
     } else {
         document.getElementById('actId').value = 1;
     }
+
+    if (globalData.disbursements && globalData.disbursements.length) {
+        document.getElementById('csrId').value = Math.max(...globalData.disbursements.map(d => Number(d.ID) || 0)) + 1;
+    } else {
+        document.getElementById('csrId').value = 1;
+    }
 }
 
 function populateDropdowns() {
@@ -67,6 +83,8 @@ function populateDropdowns() {
     const vendorYearFilter = document.getElementById('vendorYearFilter');
     const actFunderSelect = document.getElementById('actFunderSelect');
     const actFunderFilter = document.getElementById('activityFunderFilter');
+    const csrSchoolSelect = document.getElementById('csrSchoolSelect');
+    const csrFunderSelect = document.getElementById('csrFunderSelect');
 
     if (filterSelect) filterSelect.innerHTML = '<option value="ALL">All Funders Overview</option>';
     if (vendorFunderFilter) vendorFunderFilter.innerHTML = '<option value="ALL">All Funders</option>';
@@ -75,6 +93,8 @@ function populateDropdowns() {
     if (schoolFunderSelect) schoolFunderSelect.innerHTML = '';
     if (vendorFunderSelect) vendorFunderSelect.innerHTML = '';
     if (actFunderSelect) actFunderSelect.innerHTML = '';
+    if (csrFunderSelect) csrFunderSelect.innerHTML = '';
+    if (csrSchoolSelect) csrSchoolSelect.innerHTML = '';
 
     globalData.funders.forEach(f => {
         const fName = f.Funder_Name || f.funder_name || f["Funder Name"];
@@ -85,6 +105,14 @@ function populateDropdowns() {
             if (vendorFunderFilter) vendorFunderFilter.innerHTML += `<option value="${fName}">${fName}</option>`;
             if (actFunderSelect) actFunderSelect.innerHTML += `<option value="${fName}">${fName}</option>`;
             if (actFunderFilter) actFunderFilter.innerHTML += `<option value="${fName}">${fName}</option>`;
+            if (csrFunderSelect) csrFunderSelect.innerHTML += `<option value="${fName}">${fName}</option>`;
+        }
+    });
+
+    globalData.schools.forEach(s => {
+        const sName = s.School_Name || s.school_name || s["School Name"];
+        if (sName && csrSchoolSelect) {
+            csrSchoolSelect.innerHTML += `<option value="${sName}">#${s.ID} - ${sName}</option>`;
         }
     });
 
@@ -134,6 +162,14 @@ function calculateMetrics() {
             const actPending = Number(a.Amount_Pending || a["Amount Pending"] || (total - paid));
 
             totalPending += actPending;
+        }
+    });
+
+    // 4. Add School Disbursements (SASTRA CSR-la irundhu school ku direct kudutha amount)
+    (globalData.disbursements || []).forEach(d => {
+        const funder = d.Funder_Name || d.funder_name || d["Funder Name"];
+        if (selectedFunder === "ALL" || funder === selectedFunder) {
+            totalExpense += Number(d.Amount || d["Amount"] || 0);
         }
     });
 
@@ -203,6 +239,148 @@ function renderTablesAndCards() {
     renderSchoolGrid(globalData.schools || []);
     renderVendorGrid(globalData.vendors || []);
     renderActivityGrid(globalData.activities || []);
+    renderCSRBalances();
+    renderDisbursementTable(globalData.disbursements || []);
+}
+
+// ============ SASTRA CSR - Fund Allocation Feature ============
+
+function getFunderUsedAmount(funderName) {
+    let used = 0;
+    globalData.vendors.forEach(v => {
+        const vf = v.Funder_Name || v["Funder Name"];
+        if (vf === funderName) used += Number(v.Amount_Paid || 0);
+    });
+    (globalData.activities || []).forEach(a => {
+        const af = a.Funder_Name || a["Funder Name"];
+        if (af === funderName) used += Number(a.Amount_Paid || 0);
+    });
+    (globalData.disbursements || []).forEach(d => {
+        const df = d.Funder_Name || d["Funder Name"];
+        if (df === funderName) used += Number(d.Amount || 0);
+    });
+    return used;
+}
+
+function renderCSRBalances() {
+    const container = document.getElementById('csrBalanceContainer');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (!globalData.funders || globalData.funders.length === 0) {
+        container.innerHTML = `<div style="grid-column: 1/-1; text-align:center; color:#666; padding:2rem;">Innum CSR / Funder record edhuvum illa. Mudhalla "Funder Details" tab-la add pannunga.</div>`;
+        return;
+    }
+
+    globalData.funders.forEach(f => {
+        const name = f.Funder_Name || f["Funder Name"];
+        const totalFund = Number(f.Total_Fund || f["Total Fund"] || 0);
+        const used = getFunderUsedAmount(name);
+        const balance = totalFund - used;
+        const pct = totalFund > 0 ? Math.min(100, Math.round((used / totalFund) * 100)) : 0;
+        const cardType = balance < 0 ? 'danger' : (balance === 0 ? 'warning' : 'success');
+
+        container.innerHTML += `
+            <div class="metric-card ${cardType}">
+                <div class="metric-header">
+                    <h3>${name}</h3>
+                    <div class="icon-box"><i class="fa-solid fa-building-columns"></i></div>
+                </div>
+                <p>₹${balance.toLocaleString('en-IN')}</p>
+                <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.6rem; line-height:1.5;">
+                    Total Fund: ₹${totalFund.toLocaleString('en-IN')}<br>
+                    Used: ₹${used.toLocaleString('en-IN')} (${pct}%)
+                </div>
+            </div>
+        `;
+    });
+}
+
+function showSelectedCSRBalance() {
+    const funderSelect = document.getElementById('csrFunderSelect');
+    const hint = document.getElementById('csrBalanceHint');
+    if (!funderSelect || !hint) return;
+
+    const name = funderSelect.value;
+    const f = (globalData.funders || []).find(x => (x.Funder_Name || x["Funder Name"]) === name);
+    if (!f) {
+        hint.innerText = '';
+        return;
+    }
+
+    const totalFund = Number(f.Total_Fund || f["Total Fund"] || 0);
+    const used = getFunderUsedAmount(name);
+    const balance = totalFund - used;
+
+    hint.innerText = `Available Balance in "${name}": ₹${balance.toLocaleString('en-IN')}`;
+    hint.style.color = balance > 0 ? 'var(--success)' : 'var(--danger)';
+}
+
+function renderDisbursementTable(list) {
+    const tbody = document.querySelector('#csrTable tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    if (!list || list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#666; padding:1.5rem;">Innum entha school kum CSR amount kudukala.</td></tr>`;
+        return;
+    }
+
+    list.forEach(d => {
+        tbody.innerHTML += `
+            <tr>
+                <td>#${d.ID}</td>
+                <td><b>${d.School_Name || d["School Name"] || '-'}</b></td>
+                <td>${d.Funder_Name || d["Funder Name"] || '-'}</td>
+                <td>₹${Number(d.Amount || 0).toLocaleString('en-IN')}</td>
+                <td>${d.Date ? String(d.Date).split('T')[0] : '-'}</td>
+                <td>${d.Description || '-'}</td>
+                <td>
+                    <button class="btn btn-action btn-primary" onclick='editDisbursement(${JSON.stringify(d)})'><i class="fa-solid fa-pen"></i></button>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+function editDisbursement(d) {
+    document.getElementById('csrId').value = d.ID;
+    document.getElementById('csrSchoolSelect').value = d.School_Name || d["School Name"] || '';
+    document.getElementById('csrFunderSelect').value = d.Funder_Name || d["Funder Name"] || '';
+    document.getElementById('csrAmount').value = d.Amount || '';
+    document.getElementById('csrDate').value = d.Date ? String(d.Date).split('T')[0] : '';
+    document.getElementById('csrDescription').value = d.Description || '';
+    showSelectedCSRBalance();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function saveDisbursementData() {
+    const amount = Number(document.getElementById('csrAmount').value) || 0;
+    const funderName = document.getElementById('csrFunderSelect').value;
+    const f = (globalData.funders || []).find(x => (x.Funder_Name || x["Funder Name"]) === funderName);
+
+    if (f) {
+        const totalFund = Number(f.Total_Fund || f["Total Fund"] || 0);
+        const used = getFunderUsedAmount(funderName);
+        const available = totalFund - used;
+        if (amount > available) {
+            showToast(`"${funderName}" la ₹${available.toLocaleString('en-IN')} mattum thaan balance iruku!`, "error");
+            return;
+        }
+    }
+
+    const payload = {
+        action: "saveDisbursement",
+        data: {
+            ID: document.getElementById('csrId').value,
+            School_Name: document.getElementById('csrSchoolSelect').value,
+            Funder_Name: funderName,
+            Amount: document.getElementById('csrAmount').value,
+            Date: document.getElementById('csrDate').value,
+            Description: document.getElementById('csrDescription').value
+        }
+    };
+    await sendData(payload, 'csrForm');
 }
 
 function getDirectImageUrl(url) {
@@ -513,6 +691,28 @@ function showDashboardDetails(type) {
                 `;
             }
         });
+
+        // Add School Disbursement Data (only counts as "expense", never "pending")
+        if (type === 'expenses') {
+            (globalData.disbursements || []).forEach(d => {
+                const funder = d.Funder_Name || d["Funder Name"];
+                const amt = Number(d.Amount || 0);
+
+                if ((selectedFunder === "ALL" || funder === selectedFunder) && amt > 0) {
+                    contentHtml += `
+                        <tr style="border-bottom:1px solid #eee;">
+                            <td style="padding:8px;"><span class="badge" style="background:#d1fae5; color:#047857;">CSR to School</span></td>
+                            <td style="padding:8px;"><b>${d.School_Name || d["School Name"]}</b></td>
+                            <td style="padding:8px;">${funder || 'N/A'}</td>
+                            <td style="padding:8px; color:green; font-weight:bold;">₹${amt.toLocaleString('en-IN')}</td>
+                            <td style="padding:8px;">
+                                <button class="btn btn-action btn-primary" onclick='closeModal(); switchTab("sastracsr", document.querySelectorAll(".nav-item")[5]); editDisbursement(${JSON.stringify(d)});'><i class="fa-solid fa-pen"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                }
+            });
+        }
 
         contentHtml += `</tbody></table>`;
     }
