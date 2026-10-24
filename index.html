@@ -10,6 +10,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- Leaflet CSS & MarkerCluster -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -26,6 +31,9 @@
         <ul class="nav-links">
             <li class="nav-item active" onclick="switchTab('dashboard', this)">
                 <i class="fa-solid fa-chart-pie"></i> <span>Dashboard</span>
+            </li>
+            <li class="nav-item" onclick="switchTab('map-view', this)">
+                <i class="fa-solid fa-map-location-dot"></i> <span>Map Analytics</span>
             </li>
             <li class="nav-item" onclick="switchTab('funders', this)">
                 <i class="fa-solid fa-hand-holding-dollar"></i> <span>Funder Details</span>
@@ -64,6 +72,7 @@
             </div>
         </header>
 
+        <!-- DASHBOARD SECTION -->
         <section id="dashboard" class="tab-content active">
             <div class="page-header">
                 <h2 class="page-title">Dashboard Overview</h2>
@@ -116,6 +125,67 @@
             </div>
         </section>
 
+        <!-- MAP ANALYTICS SECTION -->
+        <section id="map-view" class="tab-content">
+            <div class="map-wrapper">
+                <div id="map"></div>
+
+                <div class="map-controls-panel">
+                    <div class="view-toggle">
+                        <button class="toggle-btn active" id="tn-btn" onclick="switchMapView('tn')">Tamil Nadu</button>
+                        <button class="toggle-btn" id="chennai-btn" onclick="switchMapView('chennai')">Chennai Only</button>
+                    </div>
+
+                    <div class="map-filter-group">
+                        <label>Search School</label>
+                        <input type="text" id="map-search-input" class="map-search-input" placeholder="Type school name..." oninput="applyMapFilters()">
+                    </div>
+
+                    <div class="map-filter-group">
+                        <label>Filter by District</label>
+                        <select id="map-district-filter" class="map-custom-select" onchange="applyMapFilters()">
+                            <option value="ALL">All Districts</option>
+                        </select>
+                    </div>
+
+                    <div class="map-filter-group">
+                        <label>Filter by Funder</label>
+                        <select id="map-funder-filter" class="map-custom-select" onchange="applyMapFilters()">
+                            <option value="ALL">All Funders</option>
+                        </select>
+                    </div>
+
+                    <button class="refresh-btn" onclick="fetchMapSheetData()">
+                        <i class="fa-solid fa-rotate"></i> Sync Google Sheet
+                    </button>
+                </div>
+
+                <div class="map-info-panel">
+                    <div class="info-header" id="region-title">Interactive Directory</div>
+                    <div class="info-subtitle" id="region-type">Use filters or click pins to inspect schools</div>
+
+                    <div class="map-stats-grid">
+                        <div class="map-stat-card">
+                            <div class="label">Total Schools</div>
+                            <div class="value" id="map-stat-count">0</div>
+                        </div>
+                        <div class="map-stat-card">
+                            <div class="label">Total Funders</div>
+                            <div class="value" id="map-stat-funders">0</div>
+                        </div>
+                    </div>
+
+                    <div style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 8px; font-weight: 600; text-transform: uppercase;">
+                        School Directory
+                    </div>
+                    <ul class="school-list" id="map-school-list">
+                        <li style="font-size: 0.8rem; color: #94a3b8;">Loading schools...</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- FUNDERS SECTION -->
         <section id="funders" class="tab-content">
             <div class="page-header">
                 <h2 class="page-title">Funder Management</h2>
@@ -170,6 +240,7 @@
             </div>
         </section>
 
+        <!-- SCHOOLS SECTION -->
         <section id="schools" class="tab-content">
             <div class="page-header">
                 <h2 class="page-title">School Implementation</h2>
@@ -228,6 +299,7 @@
             <div class="school-grid" id="schoolContainer"></div>
         </section>
 
+        <!-- VENDORS SECTION -->
         <section id="vendors" class="tab-content">
             <div class="page-header">
                 <h2 class="page-title">Vendor Payment Details</h2>
@@ -295,6 +367,7 @@
             <div class="school-grid" id="vendorContainer"></div>
         </section>
 
+        <!-- ACTIVITIES SECTION -->
         <section id="activities" class="tab-content">
             <div class="page-header">
                 <h2 class="page-title">Activity & Event Expenses</h2>
@@ -371,14 +444,13 @@
             <div class="school-grid" id="activityContainer"></div>
         </section>
 
+        <!-- SASTRA CSR SECTION -->
         <section id="sastracsr" class="tab-content">
             <div class="page-header">
                 <h2 class="page-title">SASTRA CSR - Fund Allocation to Schools</h2>
             </div>
 
-            <div class="metrics-grid" id="csrBalanceContainer">
-                <!-- Individual CSR / Funder balance cards render here -->
-            </div>
+            <div class="metrics-grid" id="csrBalanceContainer"></div>
 
             <div class="form-card">
                 <h3><i class="fa-solid fa-hand-holding-heart"></i> Give CSR Amount to a School</h3>
@@ -430,16 +502,20 @@
     </main>
 
     <div id="detailsModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2 id="modalTitle"></h2>
-            <span onclick="closeModal()" class="close-btn">&times;</span>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle"></h2>
+                <span onclick="closeModal()" class="close-btn">&times;</span>
+            </div>
+            <div id="modalBody" class="modal-body"></div>
         </div>
-        <div id="modalBody" class="modal-body"></div>
     </div>
-</div>
 
     <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Leaflet JS & Marker Cluster JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
 
     <script src="script.js"></script>
 </body>
