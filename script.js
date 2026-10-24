@@ -1,6 +1,5 @@
 // Google Apps Script Web App URL
 const API_URL = "https://script.google.com/macros/s/AKfycbxwwfj2lz8RZA81amrGzHnGchiubY-BmxQnUW3bt_5jGmb0cZnbNkV0Z1fNm4fYRFsd/exec";
-const GOOGLE_SCRIPT_MAP_URL = "https://script.google.com/macros/s/AKfycbyKFrXihH5IYF2M_4ndRbnuyxfum4WhpqzW9k_hIXEb7I57-aXVIyRm80HM6wFptdS3/exec";
 
 let globalData = { funders: [], schools: [], vendors: [], activities: [], disbursements: [] };
 let chartInstance = null;
@@ -9,7 +8,6 @@ let chartInstance = null;
 let map = null;
 let markersGroup = null;
 let currentMapMode = 'tn';
-let rawMapSheetData = [];
 let addressCache = {};
 
 const districtCenters = {
@@ -32,7 +30,6 @@ function switchTab(tabId, element) {
     document.getElementById(tabId).classList.add('active');
     element.classList.add('active');
 
-    // Tab மாறும் போது Map சரியாக Render ஆக
     if (tabId === 'map-view' && map) {
         setTimeout(() => {
             map.invalidateSize();
@@ -60,6 +57,10 @@ async function fetchData() {
         setNextIDs();
         showSelectedCSRBalance();
 
+        // Map Data Updates
+        populateMapDropdowns();
+        applyMapFilters();
+
     } catch (e) {
         console.error(e);
         showToast("Data loading failed. Please check permissions.", "error");
@@ -84,41 +85,34 @@ function initMap() {
         disableClusteringAtZoom: 13,
         spiderfyOnMaxZoom: true
     }).addTo(map);
-
-    fetchMapSheetData();
-}
-
-async function fetchMapSheetData() {
-    try {
-        const response = await fetch(GOOGLE_SCRIPT_MAP_URL);
-        rawMapSheetData = await response.json();
-        populateMapDropdowns();
-        applyMapFilters();
-    } catch (err) {
-        console.error("Error fetching Map Sheet Data:", err);
-    }
 }
 
 function populateMapDropdowns() {
     const districtSet = new Set();
     const funderSet = new Set();
 
-    rawMapSheetData.forEach(item => {
-        if (item["District"]) districtSet.add(item["District"].trim());
-        if (item["Funder"]) funderSet.add(item["Funder"].trim());
+    (globalData.schools || []).forEach(item => {
+        const dist = item.District || item["District"];
+        const fund = item.Funder_Name || item.funder_name || item["Funder Name"] || item["Funder"];
+        if (dist) districtSet.add(dist.trim());
+        if (fund) funderSet.add(fund.trim());
     });
 
     const distSelect = document.getElementById('map-district-filter');
-    distSelect.innerHTML = '<option value="ALL">All Districts</option>';
-    districtSet.forEach(d => {
-        distSelect.innerHTML += `<option value="${d}">${d}</option>`;
-    });
+    if (distSelect) {
+        distSelect.innerHTML = '<option value="ALL">All Districts</option>';
+        districtSet.forEach(d => {
+            distSelect.innerHTML += `<option value="${d}">${d}</option>`;
+        });
+    }
 
     const funderSelect = document.getElementById('map-funder-filter');
-    funderSelect.innerHTML = '<option value="ALL">All Funders</option>';
-    funderSet.forEach(f => {
-        funderSelect.innerHTML += `<option value="${f}">${f}</option>`;
-    });
+    if (funderSelect) {
+        funderSelect.innerHTML = '<option value="ALL">All Funders</option>';
+        funderSet.forEach(f => {
+            funderSelect.innerHTML += `<option value="${f}">${f}</option>`;
+        });
+    }
 }
 
 function getOffset(str) {
@@ -135,9 +129,9 @@ async function getCoordinates(school) {
         return { lat, lon };
     }
 
-    const address = school["School Address"] || "";
+    const address = school["School Address"] || school["Address"] || "";
     const districtName = school["District"] || "Chennai";
-    const schoolName = school["School Name"] || "";
+    const schoolName = school.School_Name || school["School Name"] || "";
     const cacheKey = address || schoolName;
 
     if (addressCache[cacheKey]) return addressCache[cacheKey];
@@ -170,21 +164,21 @@ async function applyMapFilters() {
     markersGroup.clearLayers();
 
     const listContainer = document.getElementById('map-school-list');
-    listContainer.innerHTML = '';
+    if (listContainer) listContainer.innerHTML = '';
 
-    const searchVal = document.getElementById('map-search-input').value.toLowerCase();
-    const selectedDistrict = document.getElementById('map-district-filter').value;
-    const selectedFunder = document.getElementById('map-funder-filter').value;
+    const searchVal = document.getElementById('map-search-input') ? document.getElementById('map-search-input').value.toLowerCase() : '';
+    const selectedDistrict = document.getElementById('map-district-filter') ? document.getElementById('map-district-filter').value : 'ALL';
+    const selectedFunder = document.getElementById('map-funder-filter') ? document.getElementById('map-funder-filter').value : 'ALL';
 
     let filteredCount = 0;
     const activeFunders = new Set();
     const bounds = [];
 
-    for (const school of rawMapSheetData) {
-        const name = school["School Name"] || "Unnamed School";
-        const address = school["School Address"] || "";
+    for (const school of (globalData.schools || [])) {
+        const name = school.School_Name || school["School Name"] || "Unnamed School";
+        const address = school["School Address"] || school["Address"] || "";
         const district = school["District"] || "";
-        const funder = school["Funder"] || "N/A";
+        const funder = school.Funder_Name || school.funder_name || school["Funder Name"] || school["Funder"] || "N/A";
 
         if (currentMapMode === 'chennai' && district.toLowerCase() !== 'chennai') continue;
         if (selectedDistrict !== 'ALL' && district.toLowerCase() !== selectedDistrict.toLowerCase()) continue;
@@ -194,41 +188,43 @@ async function applyMapFilters() {
         filteredCount++;
         if (funder !== "N/A") activeFunders.add(funder);
 
-        const li = document.createElement('li');
-        li.className = 'school-item';
-        li.innerHTML = `
-            <div class="name">${name}</div>
-            <div class="details">District: <b>${district}</b> | Funder: <b>${funder}</b></div>
-        `;
-        listContainer.appendChild(li);
+        if (listContainer) {
+            const li = document.createElement('li');
+            li.className = 'school-item';
+            li.innerHTML = `
+                <div class="name">${name}</div>
+                <div class="details">District: <b>${district || 'N/A'}</b> | Funder: <b>${funder}</b></div>
+            `;
+            listContainer.appendChild(li);
 
-        const coords = await getCoordinates(school);
+            const coords = await getCoordinates(school);
 
-        if (coords) {
-            bounds.push([coords.lat, coords.lon]);
-            const marker = L.marker([coords.lat, coords.lon]);
+            if (coords) {
+                bounds.push([coords.lat, coords.lon]);
+                const marker = L.marker([coords.lat, coords.lon]);
 
-            marker.bindPopup(`
-                <div style="color:#0f172a;">
-                    <strong style="font-size:14px; color:#0284c7;">${name}</strong><br/>
-                    <small style="color:#475569;">${address || 'Address not specified'}</small><br/><br/>
-                    <b>District:</b> ${district}<br/>
-                    <b>Funder:</b> ${funder}<br/>
-                    <small style="color:#64748b;">Lat: ${coords.lat.toFixed(4)}, Lon: ${coords.lon.toFixed(4)}</small>
-                </div>
-            `);
+                marker.bindPopup(`
+                    <div style="color:#0f172a;">
+                        <strong style="font-size:14px; color:#0284c7;">${name}</strong><br/>
+                        <small style="color:#475569;">${address || 'Address not specified'}</small><br/><br/>
+                        <b>District:</b> ${district || 'N/A'}<br/>
+                        <b>Funder:</b> ${funder}<br/>
+                        <small style="color:#64748b;">Lat: ${coords.lat.toFixed(4)}, Lon: ${coords.lon.toFixed(4)}</small>
+                    </div>
+                `);
 
-            li.onclick = () => {
-                map.flyTo([coords.lat, coords.lon], 16);
-                marker.openPopup();
-            };
+                li.onclick = () => {
+                    map.flyTo([coords.lat, coords.lon], 16);
+                    marker.openPopup();
+                };
 
-            markersGroup.addLayer(marker);
+                markersGroup.addLayer(marker);
+            }
         }
     }
 
-    document.getElementById('map-stat-count').innerText = filteredCount;
-    document.getElementById('map-stat-funders').innerText = activeFunders.size;
+    if (document.getElementById('map-stat-count')) document.getElementById('map-stat-count').innerText = filteredCount;
+    if (document.getElementById('map-stat-funders')) document.getElementById('map-stat-funders').innerText = activeFunders.size;
 
     if (bounds.length > 0) {
         map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
@@ -286,6 +282,7 @@ function setNextIDs() {
 function populateDropdowns() {
     const filterSelect = document.getElementById('funderFilter');
     const schoolFunderSelect = document.getElementById('schoolFunderSelect');
+    const schoolFunderFilter = document.getElementById('schoolFunderFilter');
     const vendorFunderSelect = document.getElementById('vendorFunderSelect');
     const vendorFunderFilter = document.getElementById('vendorFunderFilter');
     const vendorYearFilter = document.getElementById('vendorYearFilter');
@@ -295,6 +292,7 @@ function populateDropdowns() {
     const csrFunderSelect = document.getElementById('csrFunderSelect');
 
     if (filterSelect) filterSelect.innerHTML = '<option value="ALL">All Funders Overview</option>';
+    if (schoolFunderFilter) schoolFunderFilter.innerHTML = '<option value="ALL">All Funders</option>';
     if (vendorFunderFilter) vendorFunderFilter.innerHTML = '<option value="ALL">All Funders</option>';
     if (actFunderFilter) actFunderFilter.innerHTML = '<option value="ALL">All Funders</option>';
     
@@ -309,6 +307,7 @@ function populateDropdowns() {
         if(fName) {
             if (filterSelect) filterSelect.innerHTML += `<option value="${fName}">${fName}</option>`;
             if (schoolFunderSelect) schoolFunderSelect.innerHTML += `<option value="${fName}">${fName}</option>`;
+            if (schoolFunderFilter) schoolFunderFilter.innerHTML += `<option value="${fName}">${fName}</option>`;
             if (vendorFunderSelect) vendorFunderSelect.innerHTML += `<option value="${fName}">${fName}</option>`;
             if (vendorFunderFilter) vendorFunderFilter.innerHTML += `<option value="${fName}">${fName}</option>`;
             if (actFunderSelect) actFunderSelect.innerHTML += `<option value="${fName}">${fName}</option>`;
@@ -439,7 +438,7 @@ function renderTablesAndCards() {
         });
     }
 
-    renderSchoolGrid(globalData.schools || []);
+    filterSchools();
     renderVendorGrid(globalData.vendors || []);
     renderActivityGrid(globalData.activities || []);
     renderCSRBalances();
@@ -568,37 +567,27 @@ async function saveDisbursementData() {
     await sendData(payload, 'csrForm');
 }
 
-function getDirectImageUrl(url) {
-    if (!url) return 'https://via.placeholder.com/300x160?text=No+School+Photo';
-    if (url.includes('drive.google.com')) {
-        const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
-        if (match && match[1]) {
-            return `https://lh3.googleusercontent.com/d/${match[1]}`;
-        }
-    }
-    return url;
-}
-
+// RENDER SCHOOL GRID WITH FILTER SUPPORT
 function renderSchoolGrid(schools) {
     const schoolContainer = document.getElementById('schoolContainer');
     if (!schoolContainer) return;
     schoolContainer.innerHTML = '';
-    
+
+    if (schools.length === 0) {
+        schoolContainer.innerHTML = `<div style="grid-column: 1/-1; text-align:center; color:#666; padding:2rem;">No matching schools found for selected filters.</div>`;
+        return;
+    }
+
     schools.forEach(s => {
         const funderName = s.Funder_Name || s.funder_name || s["Funder Name"] || 'N/A';
         const contact = s.Contact_Number || s.contact_number || s["Contact Number"] || 'N/A';
-        const rawPhotoUrl = s.Photo_URL || s.photo_url || s["Photo URL"];
-        const photoUrl = getDirectImageUrl(rawPhotoUrl);
 
         schoolContainer.innerHTML += `
             <div class="school-card">
-                <img src="${photoUrl}" 
-                     alt="School Photo" 
-                     onerror="this.onerror=null; this.src='https://via.placeholder.com/300x160?text=Image+Not+Found';">
                 <div class="school-card-body">
                     <span class="badge">${s.Category || 'General'}</span>
                     <span class="badge badge-status">${s.Status || 'In Progress'}</span>
-                    <h3>#${s.ID} ${s.School_Name || 'School Name'}</h3>
+                    <h3>#${s.ID} ${s.School_Name || s["School Name"] || 'School Name'}</h3>
                     <div class="school-info">Funder: <b>${funderName}</b></div>
                     <div class="school-info">Contact: <b>${contact}</b></div>
                     <button class="btn btn-action btn-primary" style="margin-top:0.8rem; width:100%; justify-content:center;" onclick='editSchool(${JSON.stringify(s)})'>
@@ -608,6 +597,30 @@ function renderSchoolGrid(schools) {
             </div>
         `;
     });
+}
+
+function filterSchools() {
+    const query = document.getElementById('schoolSearch') ? document.getElementById('schoolSearch').value.toLowerCase() : '';
+    const selectedFunder = document.getElementById('schoolFunderFilter') ? document.getElementById('schoolFunderFilter').value : 'ALL';
+    const selectedCategory = document.getElementById('schoolCategoryFilter') ? document.getElementById('schoolCategoryFilter').value : 'ALL';
+    const selectedStatus = document.getElementById('schoolStatusFilter') ? document.getElementById('schoolStatusFilter').value : 'ALL';
+
+    const filtered = (globalData.schools || []).filter(s => {
+        const name = (s.School_Name || s["School Name"] || '').toLowerCase();
+        const id = String(s.ID);
+        const funder = s.Funder_Name || s.funder_name || s["Funder Name"] || '';
+        const category = s.Category || '';
+        const status = s.Status || '';
+
+        const matchesQuery = name.includes(query) || id.includes(query);
+        const matchesFunder = (selectedFunder === "ALL" || funder === selectedFunder);
+        const matchesCategory = (selectedCategory === "ALL" || category === selectedCategory);
+        const matchesStatus = (selectedStatus === "ALL" || status === selectedStatus);
+
+        return matchesQuery && matchesFunder && matchesCategory && matchesStatus;
+    });
+
+    renderSchoolGrid(filtered);
 }
 
 function renderVendorGrid(vendorsList) {
@@ -741,16 +754,6 @@ function filterActivities() {
     });
 
     renderActivityGrid(filtered);
-}
-
-function filterSchools() {
-    const query = document.getElementById('schoolSearch').value.toLowerCase();
-    const filtered = (globalData.schools || []).filter(s => {
-        const name = (s.School_Name || '').toLowerCase();
-        const id = String(s.ID);
-        return name.includes(query) || id.includes(query);
-    });
-    renderSchoolGrid(filtered);
 }
 
 function showVendorDetails(v) {
@@ -926,12 +929,11 @@ function editFunder(f) {
 
 function editSchool(s) {
     document.getElementById('schoolId').value = s.ID;
-    document.getElementById('schoolName').value = s.School_Name || '';
+    document.getElementById('schoolName').value = s.School_Name || s["School Name"] || '';
     document.getElementById('schoolFunderSelect').value = s.Funder_Name || s["Funder Name"] || '';
     document.getElementById('schoolContact').value = s.Contact_Number || s["Contact Number"] || '';
     document.getElementById('schoolCategory').value = s.Category || 'STEM Kits Only';
     document.getElementById('schoolStatus').value = s.Status || 'In Progress';
-    document.getElementById('schoolPhoto').value = s.Photo_URL || '';
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -984,8 +986,7 @@ async function saveSchoolData() {
             Funder_Name: document.getElementById('schoolFunderSelect').value,
             Contact_Number: document.getElementById('schoolContact').value,
             Category: document.getElementById('schoolCategory').value,
-            Status: document.getElementById('schoolStatus').value,
-            Photo_URL: document.getElementById('schoolPhoto').value
+            Status: document.getElementById('schoolStatus').value
         }
     };
     await sendData(payload, 'schoolForm');
