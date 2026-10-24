@@ -1563,7 +1563,6 @@ function generateFunderPDF() {
     }
 
     const totals = computeTotals(funder);
-
     const matchedSchools = globalData.schools.filter(s => sameText(getField(s, 'funderName'), funder));
     const matchesFunder = row => sameText(getField(row, 'funderName'), funder);
     
@@ -1621,96 +1620,116 @@ function generateFunderPDF() {
             </tr>`).join('')
         : `<tr><td colspan="5" style="text-align:center;">No expense entries recorded.</td></tr>`;
 
-    let pdfContainer = $('pdfExportContainer');
-    if (!pdfContainer) {
-        pdfContainer = document.createElement('div');
-        pdfContainer.id = 'pdfExportContainer';
-        document.body.appendChild(pdfContainer);
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+        showToast('Pop-up blocked! Please allow pop-ups for this site.', 'error');
+        return;
     }
 
-    pdfContainer.innerHTML = `
-        <div class="pdf-header">
-            <div class="pdf-header-title">
-                <h2>SASTRA STEM LAB Portal</h2>
-                <p>Funder Report: <b>${escapeHtml(funder)}</b></p>
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>${escapeHtml(funder)}_Report</title>
+            <style>
+                body { font-family: 'Plus Jakarta Sans', sans-serif; margin: 20px; color: #0f172a; }
+                .pdf-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #4f46e5; padding-bottom: 12px; margin-bottom: 20px; }
+                .pdf-header h2 { margin: 0; font-size: 1.4rem; color: #0f172a; }
+                .pdf-header p { margin: 4px 0 0 0; font-size: 0.85rem; color: #64748b; }
+                .pdf-logos { display: flex; align-items: center; gap: 12px; }
+                .pdf-logos img { height: 42px; width: auto; }
+                .pdf-logo-divider { width: 1px; height: 30px; background-color: #cbd5e1; }
+                .pdf-section-title { font-size: 1.1rem; color: #4f46e5; margin-top: 18px; margin-bottom: 10px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; }
+                .pdf-summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+                .pdf-summary-card { background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px; border-radius: 8px; }
+                .pdf-summary-card span { font-size: 0.75rem; color: #64748b; display: block; text-transform: uppercase; font-weight: 700; }
+                .pdf-summary-card strong { font-size: 1.1rem; color: #0f172a; }
+                .pdf-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 0.82rem; }
+                .pdf-table th, .pdf-table td { border: 1px solid #cbd5e1; padding: 8px 10px; text-align: left; }
+                .pdf-table th { background-color: #f1f5f9; font-weight: 700; color: #334155; }
+                .badge { display: inline-block; padding: 2px 6px; font-size: 0.7rem; font-weight: 700; border-radius: 4px; background: #e0e7ff; color: #4f46e5; }
+                @media print {
+                    body { margin: 0; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="pdf-header">
+                <div>
+                    <h2>SASTRA STEM LAB Portal</h2>
+                    <p>Funder Report: <b>${escapeHtml(funder)}</b></p>
+                </div>
+                <div class="pdf-logos">
+                    <img src="SASTRA.png" alt="SASTRA Logo" onerror="this.src='SASTRA.jpg'">
+                    <div class="pdf-logo-divider"></div>
+                    <img src="FIRST.png" alt="FIRST Logo" onerror="this.src='FIRST.jpg'">
+                </div>
             </div>
-            <div class="pdf-logos">
-                <img src="SASTRA.png" alt="SASTRA Logo" onerror="this.src='SASTRA.jpg'">
-                <div class="pdf-logo-divider"></div>
-                <img src="FIRST.png" alt="FIRST Logo" onerror="this.src='FIRST.jpg'">
-            </div>
-        </div>
 
-        <h3 class="pdf-section-title">Financial Summary</h3>
-        <div class="pdf-summary-grid">
-            <div class="pdf-summary-card">
-                <span>Total Fund</span>
-                <strong>${escapeHtml(formatINR(totals.totalFund))}</strong>
+            <h3 class="pdf-section-title">Financial Summary</h3>
+            <div class="pdf-summary-grid">
+                <div class="pdf-summary-card">
+                    <span>Total Fund</span>
+                    <strong>${escapeHtml(formatINR(totals.totalFund))}</strong>
+                </div>
+                <div class="pdf-summary-card">
+                    <span>Total Expenses</span>
+                    <strong>${escapeHtml(formatINR(totals.expense))}</strong>
+                </div>
+                <div class="pdf-summary-card">
+                    <span>Balance Available</span>
+                    <strong>${escapeHtml(formatINR(totals.balance))}</strong>
+                </div>
+                <div class="pdf-summary-card">
+                    <span>Pending Payments</span>
+                    <strong>${escapeHtml(formatINR(totals.pending))}</strong>
+                </div>
             </div>
-            <div class="pdf-summary-card">
-                <span>Total Expenses</span>
-                <strong>${escapeHtml(formatINR(totals.expense))}</strong>
-            </div>
-            <div class="pdf-summary-card">
-                <span>Balance Available</span>
-                <strong>${escapeHtml(formatINR(totals.balance))}</strong>
-            </div>
-            <div class="pdf-summary-card">
-                <span>Pending Payments</span>
-                <strong>${escapeHtml(formatINR(totals.pending))}</strong>
-            </div>
-        </div>
 
-        <h3 class="pdf-section-title">Associated Schools & Locations</h3>
-        <table class="pdf-table">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>School Name</th>
-                    <th>Address</th>
-                    <th>Contact</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${schoolRows}
-            </tbody>
-        </table>
+            <h3 class="pdf-section-title">Associated Schools & Locations</h3>
+            <table class="pdf-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>School Name</th>
+                        <th>Address</th>
+                        <th>Contact</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${schoolRows}
+                </tbody>
+            </table>
 
-        <h3 class="pdf-section-title">Expense Breakdown & Pending Bills</h3>
-        <table class="pdf-table">
-            <thead>
-                <tr>
-                    <th>Category</th>
-                    <th>Entity / Vendor</th>
-                    <th>Details</th>
-                    <th>Amount Paid</th>
-                    <th>Pending</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${expenseRows}
-            </tbody>
-        </table>
-    `;
+            <h3 class="pdf-section-title">Expense Breakdown & Pending Bills</h3>
+            <table class="pdf-table">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Entity / Vendor</th>
+                        <th>Details</th>
+                        <th>Amount Paid</th>
+                        <th>Pending</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${expenseRows}
+                </tbody>
+            </table>
 
-    const opt = {
-        margin:       [10, 10, 10, 10],
-        filename:     `${funder.replace(/\s+/g, '_')}_CSR_Report.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-
-    pdfContainer.style.display = 'block';
-    html2pdf().set(opt).from(pdfContainer).save().then(() => {
-        pdfContainer.style.display = 'none';
-        showToast('Funder PDF Report Downloaded Successfully!', 'success');
-    }).catch(err => {
-        console.error('PDF Generation Error:', err);
-        pdfContainer.style.display = 'none';
-        showToast('Failed to generate PDF. Please try again.', 'error');
-    });
+            <script>
+                window.onload = function() {
+                    setTimeout(function() {
+                        window.print();
+                        window.close();
+                    }, 300);
+                };
+            </script>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
 }
 
 function switchTab(tabId) {
