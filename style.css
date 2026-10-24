@@ -30,6 +30,7 @@
 body { 
     display: flex; 
     height: 100vh; 
+    height: 100dvh; 
     background: var(--bg); 
     color: var(--text-dark); 
     overflow: hidden; 
@@ -81,6 +82,10 @@ body {
 }
 
 .nav-item { 
+    width: 100%; 
+    border: none; 
+    background: transparent; 
+    text-align: left; 
     padding: 0.85rem 1rem; 
     margin-bottom: 0.6rem; 
     border-radius: 10px; 
@@ -147,41 +152,29 @@ body {
     display: flex;
     align-items: center;
     gap: 1.2rem;
-    background: #f8fafc;
-    padding: 0.5rem 1rem;
-    border-radius: 50px;
-    border: 1px solid #e2e8f0;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
 }
 
 .logo-wrapper {
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    background: #fff;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 4px;
-    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
-    border: 2px solid #fff;
     transition: transform 0.3s ease;
 }
 
 .logo-wrapper:hover {
-    transform: scale(1.1);
+    transform: scale(1.06);
 }
 
 .logo-wrapper img {
+    height: 48px;
+    width: auto;
     max-width: 100%;
-    max-height: 100%;
     object-fit: contain;
-    border-radius: 50%;
 }
 
 .logo-divider {
     width: 1px;
-    height: 28px;
+    height: 32px;
     background: #cbd5e1;
 }
 
@@ -225,6 +218,23 @@ body {
     box-shadow: var(--shadow-sm);
 }
 
+.filter-group > div {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.filter-group.wrap {
+    flex-wrap: wrap;
+}
+
+.filter-group .search-bar {
+    border: none;
+    padding: 0;
+    box-shadow: none;
+    background: transparent;
+}
+
 .filter-group label, .search-bar i {
     color: var(--text-muted);
     font-size: 0.9rem;
@@ -253,13 +263,16 @@ body {
     border-radius: var(--radius); 
     box-shadow: var(--shadow-md); 
     border: 1px solid var(--border-color); 
-    cursor: pointer;
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
 }
 
-.metric-card:hover {
+.metric-card.is-clickable {
+    cursor: pointer;
+}
+
+.metric-card.is-clickable:hover {
     transform: translateY(-4px);
     box-shadow: var(--shadow-lg);
 }
@@ -374,6 +387,12 @@ body {
     font-weight: 500;
 }
 
+.form-group input[readonly] {
+    background: #eef2f7;
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+
 .form-group input:focus, .form-group select:focus { 
     border-color: var(--primary); 
     background: #fff;
@@ -402,9 +421,43 @@ body {
     box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
 }
 
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
 .btn-secondary {
     background: #0f172a;
     margin-top: 0;
+}
+
+.btn-ghost {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border-color);
+}
+
+.btn-ghost:hover {
+    background: #f1f5f9;
+    color: var(--text-dark);
+    box-shadow: none;
+}
+
+.btn-block {
+    width: 100%;
+    justify-content: center;
+}
+
+.btn-spaced {
+    margin-top: 1rem;
+}
+
+.form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.8rem;
 }
 
 .btn-secondary:hover {
@@ -420,7 +473,7 @@ body {
 /* School and Vendor Cards Grid */
 .school-grid { 
     display: grid; 
-    grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); 
+    grid-template-columns: repeat(auto-fill, minmax(min(310px, 100%), 1fr)); 
     gap: 1.5rem; 
 }
 
@@ -436,6 +489,10 @@ body {
 .school-card:hover {
     transform: translateY(-4px);
     box-shadow: var(--shadow-lg);
+}
+
+.school-card.is-clickable {
+    cursor: pointer;
 }
 
 .school-card-body { 
@@ -454,10 +511,16 @@ body {
 }
 
 .badge-status {
-    background: #d1fae5;
-    color: #047857;
     margin-left: 0.3rem;
 }
+
+.badge-status--completed { background: #d1fae5; color: #047857; }
+.badge-status--progress  { background: #dbeafe; color: #1d4ed8; }
+.badge-status--pending   { background: #fef3c7; color: #92400e; }
+
+.badge--vendor   { background: #e0e7ff; color: #3730a3; }
+.badge--activity { background: #fef3c7; color: #92400e; }
+.badge--csr      { background: #d1fae5; color: #047857; }
 
 .school-card h3 { 
     font-size: 1.1rem; 
@@ -481,7 +544,7 @@ body {
     background: var(--card-bg); 
     border-radius: var(--radius); 
     border: 1px solid var(--border-color); 
-    overflow: hidden; 
+    overflow-x: auto; 
     box-shadow: var(--shadow-md); 
 }
 
@@ -522,8 +585,12 @@ tr:last-child td {
     backdrop-filter: blur(4px);
     justify-content: center;
     align-items: center;
-    z-index: 1000;
+    z-index: 2000;
     padding: 1rem;
+}
+
+.modal.open {
+    display: flex;
 }
 
 .modal-content {
@@ -559,6 +626,9 @@ tr:last-child td {
     cursor: pointer;
     color: var(--text-muted);
     line-height: 1;
+    background: transparent;
+    border: none;
+    padding: 0 0.3rem;
 }
 
 .close-btn:hover {
@@ -568,6 +638,7 @@ tr:last-child td {
 .modal-body {
     padding: 1.5rem;
     overflow-y: auto;
+    overflow-x: auto;
     flex: 1;
 }
 
@@ -806,4 +877,263 @@ tr:last-child td {
     font-size: 0.75rem;
     color: #94a3b8;
     margin-top: 3px;
+}
+
+
+/* =============================================================================
+   ADDED IN REFACTOR
+   ============================================================================= */
+
+/* [hidden] must win over component display rules such as .btn { display: inline-flex } */
+[hidden] {
+    display: none !important;
+}
+
+/* ---------- Keyboard focus (several controls previously had no visible focus) ---------- */
+:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.sidebar :focus-visible {
+    outline-color: #a5b4fc;
+}
+
+.filter-group select:focus-visible,
+.filter-group input:focus-visible,
+.map-custom-select:focus-visible,
+.map-search-input:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.map-controls-panel :focus-visible,
+.map-info-panel :focus-visible {
+    outline-color: #38bdf8;
+}
+
+.noscript-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 3000;
+    padding: 0.8rem 1rem;
+    background: #fef3c7;
+    color: #92400e;
+    text-align: center;
+    font-weight: 600;
+}
+
+/* ---------- Shared small components ---------- */
+.card-actions {
+    margin-top: 1rem;
+}
+
+.metric-note {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 0.6rem;
+    line-height: 1.5;
+}
+
+.balance-hint {
+    margin-top: 0.9rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    min-height: 1.2em;
+}
+
+.balance-hint.is-positive { color: #047857; }
+.balance-hint.is-negative { color: #b91c1c; }
+
+.empty-state {
+    text-align: center;
+    color: #666;
+    padding: 1.5rem;
+}
+
+.grid-empty {
+    grid-column: 1 / -1;
+    padding: 2rem;
+}
+
+/* Darker than --success / --danger so small text keeps enough contrast on white */
+.text-success { color: #047857; }
+.text-danger  { color: #b91c1c; }
+.fw           { font-weight: 700; }
+
+/* ---------- Dashboard drill-down modal ---------- */
+.details-scroll {
+    overflow-x: auto;
+}
+
+.details-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.details-table th,
+.details-table td {
+    padding: 0.55rem 0.6rem;
+    vertical-align: top;
+}
+
+.details-list {
+    display: grid;
+    gap: 0.6rem;
+}
+
+.details-list hr {
+    margin: 0.5rem 0;
+    border: 0;
+    border-top: 1px solid var(--border-color);
+}
+
+/* ---------- Map extras ---------- */
+.map-popup {
+    color: #0f172a;
+}
+
+.map-popup-title {
+    font-size: 14px;
+    color: #0284c7;
+}
+
+.map-popup-address {
+    color: #475569;
+}
+
+.map-popup-coords {
+    color: #64748b;
+}
+
+.directory-heading {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin-bottom: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.school-empty {
+    font-size: 0.8rem;
+    color: #94a3b8;
+}
+
+.map-error {
+    color: #fff;
+    padding: 2rem;
+}
+
+.school-item:focus-visible {
+    border-color: #38bdf8;
+}
+
+/* ---------- Responsive layout ---------- */
+@media (max-width: 900px) {
+    body {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        flex-direction: row;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.7rem 1rem;
+        overflow-x: auto;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .sidebar nav {
+        flex-shrink: 0;
+    }
+
+    .brand {
+        margin: 0;
+        padding: 0;
+        border-bottom: none;
+        flex-shrink: 0;
+    }
+
+    .brand h2 {
+        font-size: 1rem;
+        white-space: nowrap;
+    }
+
+    .nav-links {
+        display: flex;
+        gap: 0.4rem;
+    }
+
+    .nav-item {
+        width: auto;
+        margin-bottom: 0;
+        padding: 0.6rem 0.9rem;
+        white-space: nowrap;
+    }
+
+    .nav-item:hover {
+        transform: none;
+    }
+
+    .main-content {
+        padding: 1rem;
+    }
+
+    .top-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1rem;
+    }
+
+    .page-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+
+    .filter-group {
+        flex-wrap: wrap;
+    }
+
+    .metric-card p {
+        font-size: 1.4rem;
+    }
+
+    /* The map overlays stack under the map instead of covering it */
+    .map-wrapper {
+        height: auto;
+        overflow: visible;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        border: none;
+        box-shadow: none;
+    }
+
+    #map {
+        height: 55vh;
+        min-height: 320px;
+        border-radius: var(--radius);
+        border: 1px solid var(--border-color);
+    }
+
+    .map-controls-panel,
+    .map-info-panel {
+        position: static;
+        width: 100%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
 }
