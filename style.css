@@ -438,13 +438,6 @@ body {
     box-shadow: var(--shadow-lg);
 }
 
-.school-card img { 
-    width: 100%; 
-    height: 160px; 
-    object-fit: cover; 
-    background: #e2e8f0; 
-}
-
 .school-card-body { 
     padding: 1.4rem; 
 }
@@ -609,10 +602,7 @@ tr:last-child td {
     to { transform: translateX(0); }
 }
 
-/* ========================================================= */
-/* MAP ANALYTICS SECTION STYLES (INTEGRATED FROM YOUR CODE) */
-/* ========================================================= */
-
+/* MAP ANALYTICS SECTION STYLES */
 .map-wrapper {
     position: relative;
     width: 100%;
