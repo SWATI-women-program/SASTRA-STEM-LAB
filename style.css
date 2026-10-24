@@ -691,7 +691,6 @@ tr:last-child td {
     z-index: 1;
 }
 
-/* Control Panel Overlay */
 .map-controls-panel {
     position: absolute;
     top: 20px;
@@ -787,7 +786,6 @@ tr:last-child td {
     background: rgba(255, 255, 255, 0.15);
 }
 
-/* Info Panel Overlay */
 .map-info-panel {
     position: absolute;
     top: 20px;
@@ -879,17 +877,10 @@ tr:last-child td {
     margin-top: 3px;
 }
 
-
-/* =============================================================================
-   ADDED IN REFACTOR
-   ============================================================================= */
-
-/* [hidden] must win over component display rules such as .btn { display: inline-flex } */
 [hidden] {
     display: none !important;
 }
 
-/* ---------- Keyboard focus (several controls previously had no visible focus) ---------- */
 :focus-visible {
     outline: 2px solid var(--primary);
     outline-offset: 2px;
@@ -925,7 +916,6 @@ tr:last-child td {
     font-weight: 600;
 }
 
-/* ---------- Shared small components ---------- */
 .card-actions {
     margin-top: 1rem;
 }
@@ -958,12 +948,10 @@ tr:last-child td {
     padding: 2rem;
 }
 
-/* Darker than --success / --danger so small text keeps enough contrast on white */
 .text-success { color: #047857; }
 .text-danger  { color: #b91c1c; }
 .fw           { font-weight: 700; }
 
-/* ---------- Dashboard drill-down modal ---------- */
 .details-scroll {
     overflow-x: auto;
 }
@@ -991,7 +979,6 @@ tr:last-child td {
     border-top: 1px solid var(--border-color);
 }
 
-/* ---------- Map extras ---------- */
 .map-popup {
     color: #0f172a;
 }
@@ -1031,7 +1018,6 @@ tr:last-child td {
     border-color: #38bdf8;
 }
 
-/* ---------- Responsive layout ---------- */
 @media (max-width: 900px) {
     body {
         flex-direction: column;
@@ -1104,7 +1090,6 @@ tr:last-child td {
         font-size: 1.4rem;
     }
 
-    /* The map overlays stack under the map instead of covering it */
     .map-wrapper {
         height: auto;
         overflow: visible;
@@ -1136,4 +1121,107 @@ tr:last-child td {
         transition-duration: 0.01ms !important;
         scroll-behavior: auto !important;
     }
+}
+
+/* Printable PDF Export Container Styling */
+#pdfExportContainer {
+    display: none;
+    background: #ffffff;
+    color: #0f172a;
+    padding: 24px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.pdf-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #4f46e5;
+    padding-bottom: 16px;
+    margin-bottom: 20px;
+}
+
+.pdf-header-title h2 {
+    font-size: 1.4rem;
+    color: #0f172a;
+    font-weight: 800;
+}
+
+.pdf-header-title p {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-top: 4px;
+}
+
+.pdf-logos {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.pdf-logos img {
+    height: 42px;
+    width: auto;
+    object-fit: contain;
+}
+
+.pdf-logo-divider {
+    width: 1px;
+    height: 30px;
+    background-color: #cbd5e1;
+}
+
+.pdf-section-title {
+    font-size: 1.1rem;
+    color: #4f46e5;
+    margin-top: 18px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 4px;
+}
+
+.pdf-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.pdf-summary-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.pdf-summary-card span {
+    font-size: 0.75rem;
+    color: #64748b;
+    display: block;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.pdf-summary-card strong {
+    font-size: 1.1rem;
+    color: #0f172a;
+}
+
+.pdf-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    font-size: 0.82rem;
+}
+
+.pdf-table th, .pdf-table td {
+    border: 1px solid #cbd5e1;
+    padding: 8px 10px;
+    text-align: left;
+}
+
+.pdf-table th {
+    background-color: #f1f5f9;
+    font-weight: 700;
+    color: #334155;
 }
