@@ -100,6 +100,9 @@
                     <select id="funderFilter">
                         <option value="ALL">All Funders Overview</option>
                     </select>
+                    <button type="button" class="btn btn-secondary btn-action" id="downloadFunderPdfBtn">
+                        <i class="fa-solid fa-file-pdf" aria-hidden="true"></i> Download Funder PDF
+                    </button>
                 </div>
             </div>
 
@@ -573,10 +576,13 @@
 
     <div id="toastContainer" class="toast-container" role="status" aria-live="polite"></div>
 
-    <!-- Libraries (versions pinned so an upstream release cannot break the portal) -->
+    <!-- Libraries -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3"></script>
+    
+    <!-- html2pdf.js for Client-Side PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <script src="script.js"></script>
 </body>
