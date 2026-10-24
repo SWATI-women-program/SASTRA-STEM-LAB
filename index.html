@@ -1,56 +1,75 @@
 <!DOCTYPE html>
-<html lang="ta">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CSR STEM Lab Portal - Enterprise Edition</title>
-    
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Leaflet CSS & MarkerCluster -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Leaflet CSS & MarkerCluster -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css">
+
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+    <noscript>
+        <div class="noscript-banner">This portal needs JavaScript enabled to load and save data.</div>
+    </noscript>
+
     <aside class="sidebar">
         <div class="brand">
             <div class="brand-icon">
-                <i class="fa-solid fa-flask-vial"></i>
+                <i class="fa-solid fa-flask-vial" aria-hidden="true"></i>
             </div>
             <h2>SASTRA STEM LAB</h2>
         </div>
 
-        <ul class="nav-links">
-            <li class="nav-item active" onclick="switchTab('dashboard', this)">
-                <i class="fa-solid fa-chart-pie"></i> <span>Dashboard</span>
-            </li>
-            <li class="nav-item" onclick="switchTab('map-view', this)">
-                <i class="fa-solid fa-map-location-dot"></i> <span>Map Analytics</span>
-            </li>
-            <li class="nav-item" onclick="switchTab('funders', this)">
-                <i class="fa-solid fa-hand-holding-dollar"></i> <span>Funder Details</span>
-            </li>
-            <li class="nav-item" onclick="switchTab('schools', this)">
-                <i class="fa-solid fa-school"></i> <span>Schools</span>
-            </li>
-            <li class="nav-item" onclick="switchTab('vendors', this)">
-                <i class="fa-solid fa-truck-field"></i> <span>Vendors</span>
-            </li>
-            <li class="nav-item" onclick="switchTab('activities', this)">
-                <i class="fa-solid fa-list-check"></i> <span>Activities</span>
-            </li>
-            <li class="nav-item" onclick="switchTab('sastracsr', this)">
-                <i class="fa-solid fa-building-columns"></i> <span>SASTRA CSR</span>
-            </li>
-        </ul>
+        <nav aria-label="Main navigation">
+            <ul class="nav-links">
+                <li>
+                    <button type="button" class="nav-item active" data-action="switch-tab" data-tab="dashboard" aria-current="page">
+                        <i class="fa-solid fa-chart-pie" aria-hidden="true"></i> <span>Dashboard</span>
+                    </button>
+                </li>
+                <li>
+                    <button type="button" class="nav-item" data-action="switch-tab" data-tab="map-view">
+                        <i class="fa-solid fa-map-location-dot" aria-hidden="true"></i> <span>Map Analytics</span>
+                    </button>
+                </li>
+                <li>
+                    <button type="button" class="nav-item" data-action="switch-tab" data-tab="funders">
+                        <i class="fa-solid fa-hand-holding-dollar" aria-hidden="true"></i> <span>Funder Details</span>
+                    </button>
+                </li>
+                <li>
+                    <button type="button" class="nav-item" data-action="switch-tab" data-tab="schools">
+                        <i class="fa-solid fa-school" aria-hidden="true"></i> <span>Schools</span>
+                    </button>
+                </li>
+                <li>
+                    <button type="button" class="nav-item" data-action="switch-tab" data-tab="vendors">
+                        <i class="fa-solid fa-truck-field" aria-hidden="true"></i> <span>Vendors</span>
+                    </button>
+                </li>
+                <li>
+                    <button type="button" class="nav-item" data-action="switch-tab" data-tab="activities">
+                        <i class="fa-solid fa-list-check" aria-hidden="true"></i> <span>Activities</span>
+                    </button>
+                </li>
+                <li>
+                    <button type="button" class="nav-item" data-action="switch-tab" data-tab="sastracsr">
+                        <i class="fa-solid fa-building-columns" aria-hidden="true"></i> <span>SASTRA CSR</span>
+                    </button>
+                </li>
+            </ul>
+        </nav>
     </aside>
 
     <main class="main-content">
@@ -58,16 +77,16 @@
         <header class="top-header">
             <div class="header-title">
                 <h1>CSR Dashboard</h1>
-                <p>SASTRA STEM LAB Implementation & Management System</p>
+                <p>SASTRA STEM LAB Implementation &amp; Management System</p>
             </div>
-            
-            <div class="logo-container" style="background: transparent; border: none; box-shadow: none; border-radius: 0; padding: 0;">
-                <div class="logo-wrapper" title="SASTRA University" style="width: auto; height: auto; border-radius: 0; background: transparent; border: none; box-shadow: none; padding: 0;">
-                    <img src="SASTRA.png" alt="SASTRA Logo" onerror="this.onerror=null; this.src='SASTRA.jpg';" style="height: 48px; border-radius: 0;">
+
+            <div class="logo-container">
+                <div class="logo-wrapper" title="SASTRA University">
+                    <img src="SASTRA.png" data-fallback="SASTRA.jpg" alt="SASTRA University logo">
                 </div>
-                <div class="logo-divider" style="width: 1px; height: 32px; background: #cbd5e1;"></div>
-                <div class="logo-wrapper" title="FIRST" style="width: auto; height: auto; border-radius: 0; background: transparent; border: none; box-shadow: none; padding: 0;">
-                    <img src="FIRST.png" alt="FIRST Logo" onerror="this.onerror=null; this.src='FIRST.jpg';" style="height: 48px; border-radius: 0;">
+                <div class="logo-divider" aria-hidden="true"></div>
+                <div class="logo-wrapper" title="FIRST">
+                    <img src="FIRST.png" data-fallback="FIRST.jpg" alt="FIRST logo">
                 </div>
             </div>
         </header>
@@ -77,39 +96,39 @@
             <div class="page-header">
                 <h2 class="page-title">Dashboard Overview</h2>
                 <div class="filter-group">
-                    <label for="funderFilter"><i class="fa-solid fa-filter"></i> Funder:</label>
-                    <select id="funderFilter" onchange="calculateMetrics()">
+                    <label for="funderFilter"><i class="fa-solid fa-filter" aria-hidden="true"></i> Funder:</label>
+                    <select id="funderFilter">
                         <option value="ALL">All Funders Overview</option>
                     </select>
                 </div>
             </div>
 
             <div class="metrics-grid">
-                <div class="metric-card primary" onclick="showDashboardDetails('totalFund')">
+                <div class="metric-card primary is-clickable" role="button" tabindex="0" data-action="dashboard-details" data-type="totalFund">
                     <div class="metric-header">
                         <h3>Total Fund Received</h3>
-                        <div class="icon-box"><i class="fa-solid fa-wallet"></i></div>
+                        <div class="icon-box"><i class="fa-solid fa-wallet" aria-hidden="true"></i></div>
                     </div>
                     <p id="totalFund">₹0</p>
                 </div>
-                <div class="metric-card danger" onclick="showDashboardDetails('expenses')">
+                <div class="metric-card danger is-clickable" role="button" tabindex="0" data-action="dashboard-details" data-type="expenses">
                     <div class="metric-header">
                         <h3>Total Expenses</h3>
-                        <div class="icon-box"><i class="fa-solid fa-receipt"></i></div>
+                        <div class="icon-box"><i class="fa-solid fa-receipt" aria-hidden="true"></i></div>
                     </div>
                     <p id="totalExpense">₹0</p>
                 </div>
                 <div class="metric-card success">
                     <div class="metric-header">
                         <h3>Available Balance</h3>
-                        <div class="icon-box"><i class="fa-solid fa-piggy-bank"></i></div>
+                        <div class="icon-box"><i class="fa-solid fa-piggy-bank" aria-hidden="true"></i></div>
                     </div>
                     <p id="balance">₹0</p>
                 </div>
-                <div class="metric-card warning" onclick="showDashboardDetails('pending')">
+                <div class="metric-card warning is-clickable" role="button" tabindex="0" data-action="dashboard-details" data-type="pending">
                     <div class="metric-header">
-                        <h3>Vendor Pending</h3>
-                        <div class="icon-box"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                        <h3>Pending Payments</h3>
+                        <div class="icon-box"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i></div>
                     </div>
                     <p id="vendorPending">₹0</p>
                 </div>
@@ -119,7 +138,7 @@
                 <div class="chart-card">
                     <h3>Financial Analytics Overview</h3>
                     <div class="chart-container">
-                        <canvas id="financialChart"></canvas>
+                        <canvas id="financialChart" role="img" aria-label="Bar chart comparing total funds received, total expenses and total pending payments"></canvas>
                     </div>
                 </div>
             </div>
@@ -131,32 +150,32 @@
                 <div id="map"></div>
 
                 <div class="map-controls-panel">
-                    <div class="view-toggle">
-                        <button class="toggle-btn active" id="tn-btn" onclick="switchMapView('tn')">Tamil Nadu</button>
-                        <button class="toggle-btn" id="chennai-btn" onclick="switchMapView('chennai')">Chennai Only</button>
+                    <div class="view-toggle" role="group" aria-label="Map region">
+                        <button type="button" class="toggle-btn active" id="tn-btn" data-action="map-mode" data-mode="tn" aria-pressed="true">Tamil Nadu</button>
+                        <button type="button" class="toggle-btn" id="chennai-btn" data-action="map-mode" data-mode="chennai" aria-pressed="false">Chennai Only</button>
                     </div>
 
                     <div class="map-filter-group">
-                        <label>Search School</label>
-                        <input type="text" id="map-search-input" class="map-search-input" placeholder="Type school name..." oninput="applyMapFilters()">
+                        <label for="map-search-input">Search School</label>
+                        <input type="text" id="map-search-input" class="map-search-input" placeholder="Type school name..." autocomplete="off">
                     </div>
 
                     <div class="map-filter-group">
-                        <label>Filter by District</label>
-                        <select id="map-district-filter" class="map-custom-select" onchange="applyMapFilters()">
+                        <label for="map-district-filter">Filter by District</label>
+                        <select id="map-district-filter" class="map-custom-select">
                             <option value="ALL">All Districts</option>
                         </select>
                     </div>
 
                     <div class="map-filter-group">
-                        <label>Filter by Funder</label>
-                        <select id="map-funder-filter" class="map-custom-select" onchange="applyMapFilters()">
+                        <label for="map-funder-filter">Filter by Funder</label>
+                        <select id="map-funder-filter" class="map-custom-select">
                             <option value="ALL">All Funders</option>
                         </select>
                     </div>
 
-                    <button class="refresh-btn" onclick="fetchData()">
-                        <i class="fa-solid fa-rotate"></i> Sync Google Sheet
+                    <button type="button" class="refresh-btn" id="syncBtn">
+                        <i class="fa-solid fa-rotate" aria-hidden="true"></i> Sync Google Sheet
                     </button>
                 </div>
 
@@ -175,11 +194,9 @@
                         </div>
                     </div>
 
-                    <div style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 8px; font-weight: 600; text-transform: uppercase;">
-                        School Directory
-                    </div>
+                    <div class="directory-heading">School Directory</div>
                     <ul class="school-list" id="map-school-list">
-                        <li style="font-size: 0.8rem; color: #94a3b8;">Loading schools...</li>
+                        <li class="school-empty">Loading schools...</li>
                     </ul>
                 </div>
             </div>
@@ -189,37 +206,40 @@
         <section id="funders" class="tab-content">
             <div class="page-header">
                 <h2 class="page-title">Funder Management</h2>
-                <button class="btn btn-secondary" onclick="exportToCSV('funderTable', 'Funders_Report')">
-                    <i class="fa-solid fa-file-csv"></i> Export CSV
+                <button type="button" class="btn btn-secondary" data-action="export-csv" data-table="funderTable" data-filename="Funders_Report">
+                    <i class="fa-solid fa-file-csv" aria-hidden="true"></i> Export CSV
                 </button>
             </div>
 
             <div class="form-card">
-                <h3><i class="fa-solid fa-pen-to-square"></i> Add / Update Funder Details</h3>
-                <form id="funderForm" onsubmit="event.preventDefault(); saveFunderData();">
+                <h3><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> Add / Update Funder Details</h3>
+                <form id="funderForm" autocomplete="off">
                     <div class="form-grid">
                         <div class="form-group">
-                            <label>Funder ID *</label>
-                            <input type="number" id="funderId" placeholder="e.g., 1" required>
+                            <label for="funderId">Funder ID *</label>
+                            <input type="number" id="funderId" placeholder="e.g., 1" min="1" step="1" required>
                         </div>
                         <div class="form-group">
-                            <label>Funder / Company Name *</label>
+                            <label for="funderName">Funder / Company Name *</label>
                             <input type="text" id="funderName" placeholder="e.g., PAYPAL CSR" required>
                         </div>
                         <div class="form-group">
-                            <label>Confirmed Date</label>
+                            <label for="funderConfirmDate">Confirmed Date</label>
                             <input type="date" id="funderConfirmDate">
                         </div>
                         <div class="form-group">
-                            <label>Received Date</label>
+                            <label for="funderReceivedDate">Received Date</label>
                             <input type="date" id="funderReceivedDate">
                         </div>
                         <div class="form-group">
-                            <label>Total Fund Amount (₹) *</label>
-                            <input type="number" id="funderTotalAmount" placeholder="0" required>
+                            <label for="funderTotalAmount">Total Fund Amount (₹) *</label>
+                            <input type="number" id="funderTotalAmount" placeholder="0" min="0" step="0.01" inputmode="decimal" required>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save Funder Details</button>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Save Funder Details</button>
+                        <button type="button" class="btn btn-ghost" id="funderCancelBtn" data-action="cancel-edit" data-kind="funder" hidden>Cancel edit</button>
+                    </div>
                 </form>
             </div>
 
@@ -227,12 +247,12 @@
                 <table id="funderTable">
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Funder Name</th>
-                            <th>Confirmed Date</th>
-                            <th>Received Date</th>
-                            <th>Total Fund (₹)</th>
-                            <th>Actions</th>
+                            <th scope="col">ID</th>
+                            <th scope="col">Funder Name</th>
+                            <th scope="col">Confirmed Date</th>
+                            <th scope="col">Received Date</th>
+                            <th scope="col">Total Fund (₹)</th>
+                            <th scope="col">Actions</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -244,20 +264,20 @@
         <section id="schools" class="tab-content">
             <div class="page-header">
                 <h2 class="page-title">School Implementation</h2>
-                <div class="filter-group" style="flex-wrap: wrap;">
-                    <div class="search-bar" style="border: none; padding: 0; box-shadow: none;">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                        <input type="text" id="schoolSearch" placeholder="Search school name or ID..." onkeyup="filterSchools()">
+                <div class="filter-group wrap">
+                    <div class="search-bar">
+                        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                        <input type="text" id="schoolSearch" placeholder="Search school name or ID..." aria-label="Search schools by name or ID" autocomplete="off">
                     </div>
                     <div>
-                        <label for="schoolFunderFilter"><i class="fa-solid fa-filter"></i> Funder:</label>
-                        <select id="schoolFunderFilter" onchange="filterSchools()">
+                        <label for="schoolFunderFilter"><i class="fa-solid fa-filter" aria-hidden="true"></i> Funder:</label>
+                        <select id="schoolFunderFilter">
                             <option value="ALL">All Funders</option>
                         </select>
                     </div>
                     <div>
-                        <label for="schoolCategoryFilter"><i class="fa-solid fa-layer-group"></i> Category:</label>
-                        <select id="schoolCategoryFilter" onchange="filterSchools()">
+                        <label for="schoolCategoryFilter"><i class="fa-solid fa-layer-group" aria-hidden="true"></i> Category:</label>
+                        <select id="schoolCategoryFilter">
                             <option value="ALL">All Categories</option>
                             <option value="STEM Kits Only">STEM Kits Only</option>
                             <option value="STEM Kits + System">STEM Kits + System</option>
@@ -266,8 +286,8 @@
                         </select>
                     </div>
                     <div>
-                        <label for="schoolStatusFilter"><i class="fa-solid fa-list-check"></i> Status:</label>
-                        <select id="schoolStatusFilter" onchange="filterSchools()">
+                        <label for="schoolStatusFilter"><i class="fa-solid fa-list-check" aria-hidden="true"></i> Status:</label>
+                        <select id="schoolStatusFilter">
                             <option value="ALL">All Status</option>
                             <option value="In Progress">In Progress</option>
                             <option value="Completed">Completed</option>
@@ -278,27 +298,27 @@
             </div>
 
             <div class="form-card">
-                <h3><i class="fa-solid fa-pen-to-square"></i> Add / Update School Details</h3>
-                <form id="schoolForm" onsubmit="event.preventDefault(); saveSchoolData();">
+                <h3><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> Add / Update School Details</h3>
+                <form id="schoolForm" autocomplete="off">
                     <div class="form-grid">
                         <div class="form-group">
-                            <label>School ID *</label>
-                            <input type="number" id="schoolId" placeholder="e.g., 1" required>
+                            <label for="schoolId">School ID *</label>
+                            <input type="number" id="schoolId" placeholder="e.g., 1" min="1" step="1" required>
                         </div>
                         <div class="form-group">
-                            <label>School Name *</label>
+                            <label for="schoolName">School Name *</label>
                             <input type="text" id="schoolName" placeholder="School Name" required>
                         </div>
                         <div class="form-group">
-                            <label>Associated Funder *</label>
+                            <label for="schoolFunderSelect">Associated Funder *</label>
                             <select id="schoolFunderSelect" required></select>
                         </div>
                         <div class="form-group">
-                            <label>Contact Number *</label>
-                            <input type="tel" id="schoolContact" placeholder="Phone Number" required>
+                            <label for="schoolContact">Contact Number *</label>
+                            <input type="tel" id="schoolContact" placeholder="Phone Number" pattern="[0-9+()\-\s]{7,18}" title="Enter a phone number (digits, spaces, + ( ) - allowed; 7 to 18 characters)" required>
                         </div>
                         <div class="form-group">
-                            <label>Implementation Category</label>
+                            <label for="schoolCategory">Implementation Category</label>
                             <select id="schoolCategory">
                                 <option value="STEM Kits Only">STEM Kits Only</option>
                                 <option value="STEM Kits + System">STEM Kits + System</option>
@@ -307,7 +327,7 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>Status</label>
+                            <label for="schoolStatus">Status</label>
                             <select id="schoolStatus">
                                 <option value="In Progress">In Progress</option>
                                 <option value="Completed">Completed</option>
@@ -315,7 +335,10 @@
                             </select>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save School Entry</button>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Save School Entry</button>
+                        <button type="button" class="btn btn-ghost" id="schoolCancelBtn" data-action="cancel-edit" data-kind="school" hidden>Cancel edit</button>
+                    </div>
                 </form>
             </div>
 
@@ -328,14 +351,14 @@
                 <h2 class="page-title">Vendor Payment Details</h2>
                 <div class="filter-group">
                     <div>
-                        <label for="vendorFunderFilter"><i class="fa-solid fa-filter"></i> Funder:</label>
-                        <select id="vendorFunderFilter" onchange="filterVendors()">
+                        <label for="vendorFunderFilter"><i class="fa-solid fa-filter" aria-hidden="true"></i> Funder:</label>
+                        <select id="vendorFunderFilter">
                             <option value="ALL">All Funders</option>
                         </select>
                     </div>
                     <div>
-                        <label for="vendorYearFilter"><i class="fa-solid fa-calendar"></i> Year:</label>
-                        <select id="vendorYearFilter" onchange="filterVendors()">
+                        <label for="vendorYearFilter"><i class="fa-solid fa-calendar" aria-hidden="true"></i> Year:</label>
+                        <select id="vendorYearFilter">
                             <option value="ALL">All Years</option>
                         </select>
                     </div>
@@ -343,47 +366,50 @@
             </div>
 
             <div class="form-card">
-                <h3><i class="fa-solid fa-pen-to-square"></i> Add / Update Vendor Details</h3>
-                <form id="vendorForm" onsubmit="event.preventDefault(); saveVendorData();">
+                <h3><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> Add / Update Vendor Details</h3>
+                <form id="vendorForm" autocomplete="off">
                     <div class="form-grid">
                         <div class="form-group">
-                            <label>Vendor ID *</label>
-                            <input type="number" id="vendorId" placeholder="e.g., 1" required>
+                            <label for="vendorId">Vendor ID *</label>
+                            <input type="number" id="vendorId" placeholder="e.g., 1" min="1" step="1" required>
                         </div>
                         <div class="form-group">
-                            <label>Vendor Name *</label>
+                            <label for="vendorName">Vendor Name *</label>
                             <input type="text" id="vendorName" placeholder="Vendor Name" required>
                         </div>
                         <div class="form-group">
-                            <label>Associated Funder *</label>
+                            <label for="vendorFunderSelect">Associated Funder *</label>
                             <select id="vendorFunderSelect" required></select>
                         </div>
                         <div class="form-group">
-                            <label>Financial / Rate Year *</label>
+                            <label for="vendorYear">Financial / Rate Year *</label>
                             <input type="text" id="vendorYear" placeholder="e.g., 2025-26" required>
                         </div>
                         <div class="form-group">
-                            <label>Service / Item Provided</label>
+                            <label for="vendorService">Service / Item Provided</label>
                             <input type="text" id="vendorService" placeholder="Service Info">
                         </div>
                         <div class="form-group">
-                            <label>Unit Cost (₹)</label>
-                            <input type="number" id="vendorUnitCost" placeholder="0" oninput="calculateVendorTotal()">
+                            <label for="vendorUnitCost">Unit Cost (₹)</label>
+                            <input type="number" id="vendorUnitCost" placeholder="0" min="0" step="0.01" inputmode="decimal">
                         </div>
                         <div class="form-group">
-                            <label>Quantity / Units Sold</label>
-                            <input type="number" id="vendorUnits" placeholder="0" oninput="calculateVendorTotal()">
+                            <label for="vendorUnits">Quantity / Units Sold</label>
+                            <input type="number" id="vendorUnits" placeholder="0" min="0" step="any" inputmode="decimal">
                         </div>
                         <div class="form-group">
-                            <label>Amount Paid (₹)</label>
-                            <input type="number" id="vendorPaid" placeholder="0" oninput="calculateVendorTotal()">
+                            <label for="vendorPaid">Amount Paid (₹)</label>
+                            <input type="number" id="vendorPaid" placeholder="0" min="0" step="0.01" inputmode="decimal">
                         </div>
                         <div class="form-group">
-                            <label>Amount Pending (₹)</label>
-                            <input type="number" id="vendorPendingAmt" placeholder="0" readonly>
+                            <label for="vendorPendingAmt">Amount Pending (₹)</label>
+                            <input type="number" id="vendorPendingAmt" placeholder="0" step="0.01" readonly>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save Vendor Entry</button>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Save Vendor Entry</button>
+                        <button type="button" class="btn btn-ghost" id="vendorCancelBtn" data-action="cancel-edit" data-kind="vendor" hidden>Cancel edit</button>
+                    </div>
                 </form>
             </div>
 
@@ -393,74 +419,77 @@
         <!-- ACTIVITIES SECTION -->
         <section id="activities" class="tab-content">
             <div class="page-header">
-                <h2 class="page-title">Activity & Event Expenses</h2>
+                <h2 class="page-title">Activity &amp; Event Expenses</h2>
                 <div class="filter-group">
                     <div>
-                        <label for="activityFunderFilter"><i class="fa-solid fa-filter"></i> Funder:</label>
-                        <select id="activityFunderFilter" onchange="filterActivities()">
+                        <label for="activityFunderFilter"><i class="fa-solid fa-filter" aria-hidden="true"></i> Funder:</label>
+                        <select id="activityFunderFilter">
                             <option value="ALL">All Funders</option>
                         </select>
                     </div>
                     <div>
-                        <label for="activityCategoryFilter"><i class="fa-solid fa-layer-group"></i> Category:</label>
-                        <select id="activityCategoryFilter" onchange="filterActivities()">
+                        <label for="activityCategoryFilter"><i class="fa-solid fa-layer-group" aria-hidden="true"></i> Category:</label>
+                        <select id="activityCategoryFilter">
                             <option value="ALL">All Categories</option>
-                            <option value="Events & Monitoring">Events & Monitoring</option>
-                            <option value="Travel & Accommodation">Travel & Accommodation</option>
-                            <option value="Food & Refreshments">Food & Refreshments</option>
-                            <option value="Training & Workshops">Training & Workshops</option>
+                            <option value="Events & Monitoring">Events &amp; Monitoring</option>
+                            <option value="Travel & Accommodation">Travel &amp; Accommodation</option>
+                            <option value="Food & Refreshments">Food &amp; Refreshments</option>
+                            <option value="Training & Workshops">Training &amp; Workshops</option>
                         </select>
                     </div>
                 </div>
             </div>
 
             <div class="form-card">
-                <h3><i class="fa-solid fa-pen-to-square"></i> Add / Update Activity Detail</h3>
-                <form id="activityForm" onsubmit="event.preventDefault(); saveActivityData();">
+                <h3><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> Add / Update Activity Detail</h3>
+                <form id="activityForm" autocomplete="off">
                     <div class="form-grid">
                         <div class="form-group">
-                            <label>Activity ID *</label>
-                            <input type="number" id="actId" placeholder="e.g., 1" required>
+                            <label for="actId">Activity ID *</label>
+                            <input type="number" id="actId" placeholder="e.g., 1" min="1" step="1" required>
                         </div>
                         <div class="form-group">
-                            <label>Category *</label>
+                            <label for="actCategory">Category *</label>
                             <select id="actCategory" required>
-                                <option value="Events & Monitoring">Events & Monitoring</option>
-                                <option value="Travel & Accommodation">Travel & Accommodation</option>
-                                <option value="Food & Refreshments">Food & Refreshments</option>
-                                <option value="Training & Workshops">Training & Workshops</option>
+                                <option value="Events & Monitoring">Events &amp; Monitoring</option>
+                                <option value="Travel & Accommodation">Travel &amp; Accommodation</option>
+                                <option value="Food & Refreshments">Food &amp; Refreshments</option>
+                                <option value="Training & Workshops">Training &amp; Workshops</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>Associated Funder *</label>
+                            <label for="actFunderSelect">Associated Funder *</label>
                             <select id="actFunderSelect" required></select>
                         </div>
                         <div class="form-group">
-                            <label>Vendor / Service Provider *</label>
+                            <label for="actVendor">Vendor / Service Provider *</label>
                             <input type="text" id="actVendor" placeholder="e.g., Chendur Velan Ventures" required>
                         </div>
                         <div class="form-group">
-                            <label>Activity Description *</label>
+                            <label for="actDescription">Activity Description *</label>
                             <input type="text" id="actDescription" placeholder="e.g., Tea & Lunch / Travel" required>
                         </div>
                         <div class="form-group">
-                            <label>Unit Cost (₹)</label>
-                            <input type="number" id="actUnitCost" placeholder="0" oninput="calculateActivityTotal()">
+                            <label for="actUnitCost">Unit Cost (₹)</label>
+                            <input type="number" id="actUnitCost" placeholder="0" min="0" step="0.01" inputmode="decimal">
                         </div>
                         <div class="form-group">
-                            <label>Quantity / Units</label>
-                            <input type="number" id="actUnits" placeholder="1" value="1" oninput="calculateActivityTotal()">
+                            <label for="actUnits">Quantity / Units</label>
+                            <input type="number" id="actUnits" placeholder="1" value="1" min="1" step="any" inputmode="decimal">
                         </div>
                         <div class="form-group">
-                            <label>Amount Paid (₹)</label>
-                            <input type="number" id="actPaid" placeholder="0" oninput="calculateActivityTotal()">
+                            <label for="actPaid">Amount Paid (₹)</label>
+                            <input type="number" id="actPaid" placeholder="0" min="0" step="0.01" inputmode="decimal">
                         </div>
                         <div class="form-group">
-                            <label>Amount Pending (₹)</label>
-                            <input type="number" id="actPending" placeholder="0" readonly>
+                            <label for="actPending">Amount Pending (₹)</label>
+                            <input type="number" id="actPending" placeholder="0" step="0.01" readonly>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save Activity Entry</button>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Save Activity Entry</button>
+                        <button type="button" class="btn btn-ghost" id="activityCancelBtn" data-action="cancel-edit" data-kind="activity" hidden>Cancel edit</button>
+                    </div>
                 </form>
             </div>
 
@@ -476,23 +505,23 @@
             <div class="metrics-grid" id="csrBalanceContainer"></div>
 
             <div class="form-card">
-                <h3><i class="fa-solid fa-hand-holding-heart"></i> Give CSR Amount to a School</h3>
-                <form id="csrForm" onsubmit="event.preventDefault(); saveDisbursementData();">
+                <h3><i class="fa-solid fa-hand-holding-heart" aria-hidden="true"></i> Give CSR Amount to a School</h3>
+                <form id="csrForm" autocomplete="off">
                     <div class="form-grid">
                         <div class="form-group">
-                            <label>Disbursement ID *</label>
-                            <input type="number" id="csrId" placeholder="e.g., 1" required>
+                            <label for="csrId">Disbursement ID *</label>
+                            <input type="number" id="csrId" placeholder="e.g., 1" min="1" step="1" required>
                         </div>
                         <div class="form-group">
-                            <label>Select School *</label>
+                            <label for="csrSchoolSelect">Select School *</label>
                             <select id="csrSchoolSelect" required></select>
                         </div>
                         <div class="form-group">
-                            <label>Given From (CSR / Funder) *</label>
-                            <select id="csrFunderSelect" required onchange="showSelectedCSRBalance()"></select>
+                            <label for="csrFunderSelect">Given From (CSR / Funder) *</label>
+                            <select id="csrFunderSelect" required></select>
                         </div>
                         <div class="form-group">
-                            <label>What was Given (Category) *</label>
+                            <label for="csrCategory">What was Given (Category) *</label>
                             <select id="csrCategory" required>
                                 <option value="STEM Kits Only">STEM Kits Only</option>
                                 <option value="STEM Kits + System">STEM Kits + System</option>
@@ -500,9 +529,16 @@
                                 <option value="Full Infra + Kits + Systems">Full Infra + Kits + Systems</option>
                             </select>
                         </div>
+                        <div class="form-group">
+                            <label for="csrAmount">Amount Given (₹)</label>
+                            <input type="number" id="csrAmount" placeholder="0" min="0" step="0.01" inputmode="decimal">
+                        </div>
                     </div>
-                    <p id="csrBalanceHint" style="margin-top:0.9rem; font-weight:700; color:var(--text-muted);"></p>
-                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save Disbursement</button>
+                    <p id="csrBalanceHint" class="balance-hint" aria-live="polite"></p>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Save Disbursement</button>
+                        <button type="button" class="btn btn-ghost" id="csrCancelBtn" data-action="cancel-edit" data-kind="csr" hidden>Cancel edit</button>
+                    </div>
                 </form>
             </div>
 
@@ -510,11 +546,12 @@
                 <table id="csrTable">
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>School</th>
-                            <th>CSR (Funder)</th>
-                            <th>What was Given</th>
-                            <th>Actions</th>
+                            <th scope="col">ID</th>
+                            <th scope="col">School</th>
+                            <th scope="col">CSR (Funder)</th>
+                            <th scope="col">What was Given</th>
+                            <th scope="col">Amount</th>
+                            <th scope="col">Actions</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -524,21 +561,22 @@
 
     </main>
 
-    <div id="detailsModal" class="modal">
+    <div id="detailsModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
         <div class="modal-content">
             <div class="modal-header">
                 <h2 id="modalTitle"></h2>
-                <span onclick="closeModal()" class="close-btn">&times;</span>
+                <button type="button" class="close-btn" data-action="close-modal" aria-label="Close dialog">&times;</button>
             </div>
             <div id="modalBody" class="modal-body"></div>
         </div>
     </div>
 
-    <div id="toastContainer" class="toast-container"></div>
+    <div id="toastContainer" class="toast-container" role="status" aria-live="polite"></div>
 
-    <!-- Leaflet JS & Marker Cluster JS -->
+    <!-- Libraries (versions pinned so an upstream release cannot break the portal) -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3"></script>
 
     <script src="script.js"></script>
 </body>
