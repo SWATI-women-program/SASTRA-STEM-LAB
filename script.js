@@ -1,17 +1,3 @@
-/* =============================================================================
-   CSR STEM Lab Portal - script.js (refactored)
-   -----------------------------------------------------------------------------
-   Sections
-     1. Configuration & lookup data
-     2. Generic helpers (escaping, number/date parsing, formatting)
-     3. State
-     4. Data loading & saving (Google Apps Script API)
-     5. Dashboard (metrics, chart, drill-down modal)
-     6. Lists, grids & tables
-     7. Forms (edit mode, validation, save)
-     8. Map analytics (Leaflet, geocoding queue)
-     9. UI plumbing (tabs, modal, toast, CSV export, event binding, init)
-   ============================================================================= */
 'use strict';
 
 (() => {
@@ -21,19 +7,16 @@
    ============================================================================= */
 
 const CONFIG = Object.freeze({
-    // Google Apps Script Web App URL
     API_URL: "https://script.google.com/macros/s/AKfycbxwwfj2lz8RZA81amrGzHnGchiubY-BmxQnUW3bt_5jGmb0cZnbNkV0Z1fNm4fYRFsd/exec",
     REQUEST_TIMEOUT_MS: 30000,
     GEOCODE_TIMEOUT_MS: 15000,
-    GEOCODE_DELAY_MS: 1100,               // Nominatim usage policy: max 1 request / second
+    GEOCODE_DELAY_MS: 1100,
     GEOCODE_CACHE_KEY: 'csr_portal_geocache_v1',
     SEARCH_DEBOUNCE_MS: 250,
     TN_CENTER: Object.freeze({ lat: 11.1271, lon: 78.6569 }),
     CHENNAI_CENTER: Object.freeze({ lat: 13.0827, lon: 80.2707 })
 });
 
-// The sheet may return columns as Snake_Case, snake_case or "Spaced Names".
-// Every lookup goes through these lists so all screens read the data the same way.
 const FIELD = Object.freeze({
     id:            ['ID', 'Id', 'id'],
     funderName:    ['Funder_Name', 'funder_name', 'Funder Name', 'Funder'],
@@ -60,7 +43,6 @@ const FIELD = Object.freeze({
     description:   ['Description', 'description']
 });
 
-// One entry per editable record type.
 const FORMS = Object.freeze({
     funder:   { form: 'funderForm',   idInput: 'funderId', cancel: 'funderCancelBtn',   list: 'funders',       tab: 'funders',    label: 'Funder' },
     school:   { form: 'schoolForm',   idInput: 'schoolId', cancel: 'schoolCancelBtn',   list: 'schools',       tab: 'schools',    label: 'School' },
@@ -69,8 +51,6 @@ const FORMS = Object.freeze({
     csr:      { form: 'csrForm',      idInput: 'csrId',    cancel: 'csrCancelBtn',      list: 'disbursements', tab: 'sastracsr',  label: 'Disbursement' }
 });
 
-// Approximate district headquarters, used only when a school has no usable
-// coordinates and no address that could be geocoded.
 const DISTRICT_CENTERS = Object.freeze({
     'ariyalur': { lat: 11.1401, lon: 79.0786 },
     'chengalpattu': { lat: 12.6819, lon: 79.9888 },
@@ -112,7 +92,6 @@ const DISTRICT_CENTERS = Object.freeze({
     'virudhunagar': { lat: 9.5850, lon: 77.9570 }
 });
 
-// Common alternate spellings -> key used in DISTRICT_CENTERS.
 const DISTRICT_ALIASES = Object.freeze({
     'kanchipuram': 'kancheepuram',
     'kanniyakumari': 'kanyakumari',
@@ -134,8 +113,6 @@ const DISTRICT_ALIASES = Object.freeze({
     'thirunelveli': 'tirunelveli'
 });
 
-// Generous bounding box around Tamil Nadu. Used to sanity-check geocoder hits
-// and to detect latitude/longitude typed the wrong way round.
 const TN_BOUNDS = Object.freeze({ minLat: 7.5, maxLat: 14.5, minLon: 75.5, maxLon: 81.0 });
 
 /* =============================================================================
@@ -149,16 +126,12 @@ function on(id, eventName, handler) {
     if (el) el.addEventListener(eventName, handler);
 }
 
-/** Escape text before it is placed into an HTML string. */
 function escapeHtml(value) {
     return String(value ?? '').replace(/[&<>"']/g, (ch) => (
         { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]
     ));
 }
 
-/**
- * First non-blank value among `keys`. Unlike `a || b`, a legitimate 0 is kept.
- */
 function pick(row, keys, fallback = '') {
     if (!row) return fallback;
     for (const key of keys) {
@@ -170,7 +143,6 @@ function pick(row, keys, fallback = '') {
 
 const getField = (row, name, fallback = '') => pick(row, FIELD[name], fallback);
 
-/** Tolerant number parser: handles "1,00,000", "₹500", blanks and junk. */
 function toNumber(value, fallback = 0) {
     if (typeof value === 'number') return Number.isFinite(value) ? value : fallback;
     if (value === null || value === undefined) return fallback;
@@ -185,7 +157,6 @@ const round2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
 const INR_WHOLE = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 });
 const INR_DECIMAL = new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-/** ₹1,00,000 / -₹5,000 / ₹1,250.50 */
 function formatINR(value) {
     const n = round2(toNumber(value));
     const abs = Math.abs(n);
@@ -193,7 +164,6 @@ function formatINR(value) {
     return `${n < 0 ? '-' : ''}₹${body}`;
 }
 
-/** Number -> value for an <input type="number"> ('' when not numeric). */
 function numberToInput(value) {
     if (value === '' || value === null || value === undefined) return '';
     const n = toNumber(value, NaN);
@@ -214,11 +184,6 @@ function debounce(fn, delay) {
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-/**
- * Sheet dates arrive as ISO timestamps in UTC. For a user in India (UTC+5:30)
- * "2025-03-15" is serialised as "2025-03-14T18:30:00.000Z", so splitting on 'T'
- * shows the previous day. Convert to the browser's local calendar date instead.
- */
 function toInputDate(value) {
     if (value === '' || value === null || value === undefined) return '';
     const text = String(value).trim();
@@ -245,14 +210,12 @@ function nextId(list) {
 let globalData = emptyData();
 let chartInstance = null;
 let chartUnavailable = false;
-let fetchSeq = 0;                 // lets a newer fetch supersede an older one
+let fetchSeq = 0;
 let isSubmitting = false;
 let lastModalTrigger = null;
 
-// ID of the record currently loaded into each form (null = creating a new one).
 const editing = { funder: null, school: null, vendor: null, activity: null, csr: null };
 
-// Map state
 let map = null;
 let markersGroup = null;
 let currentMapMode = 'tn';
@@ -299,7 +262,7 @@ async function fetchData() {
         const response = await fetchWithTimeout(CONFIG.API_URL);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
-        if (seq !== fetchSeq) return;                    // a newer request is in flight
+        if (seq !== fetchSeq) return;
         if (data && data.error) throw new Error(String(data.error));
 
         globalData = normalizeData(data);
@@ -313,7 +276,6 @@ async function fetchData() {
     }
 }
 
-/** Re-render everything that depends on the sheet data. */
 function renderAll() {
     populateDropdowns();
     renderFunderTable();
@@ -333,7 +295,7 @@ async function parseJsonSafe(response) {
     try {
         return await response.json();
     } catch (_) {
-        return null;      // Apps Script may legitimately answer with plain text
+        return null;
     }
 }
 
@@ -399,10 +361,6 @@ function activityAmounts(a) {
     return { unitCost, units, paid, pending, total };
 }
 
-/**
- * Single source of truth for fund / expense / pending figures.
- * `funderName === null` means "all funders".
- */
 function computeTotals(funderName = null, { excludeDisbursementId = null } = {}) {
     const matches = (row) => funderName === null || sameText(getField(row, 'funderName'), funderName);
     let totalFund = 0;
@@ -528,10 +486,6 @@ function populateDropdowns() {
     fillSelect('vendorYearFilter', years.map((y) => ({ value: y, label: y })), 'All Years');
 }
 
-/**
- * Rebuild a <select>, keeping the user's current choice when it still exists
- * (so a background sync does not reset filters or half-filled forms).
- */
 function fillSelect(id, options, allLabel = null) {
     const select = $(id);
     if (!select) return;
@@ -545,12 +499,6 @@ function fillSelect(id, options, allLabel = null) {
     }
 }
 
-/**
- * Select `value` in a <select>.
- *  - allowAdd: add the value as an option when missing (used for funder/school links so
- *              an orphaned name is preserved instead of silently blanked).
- *  - fallback: value to use when `value` is blank or not an option (fixed lists).
- */
 function setSelectValue(id, value, { allowAdd = false, fallback = null } = {}) {
     const select = $(id);
     if (!select) return;
@@ -832,8 +780,6 @@ function showSelectedCSRBalance() {
     hint.classList.add(available > 0 && !exceeds ? 'is-positive' : 'is-negative');
 }
 
-/* ---------- Dashboard drill-down modal ---------- */
-
 function buildDetailsTable(headings, rowsHtml) {
     const head = headings.map((h) => `<th>${escapeHtml(h)}</th>`).join('');
     const body = rowsHtml.length
@@ -953,7 +899,7 @@ function setEditMode(kind, recordId) {
     editing[kind] = isEditing ? String(recordId) : null;
 
     const idInput = $(cfg.idInput);
-    if (idInput) idInput.readOnly = isEditing;      // changing the ID mid-edit would create a different record
+    if (idInput) idInput.readOnly = isEditing;
 
     const cancelBtn = $(cfg.cancel);
     if (cancelBtn) cancelBtn.hidden = !isEditing;
@@ -972,7 +918,6 @@ function resetForm(kind) {
     if (kind === 'csr') showSelectedCSRBalance();
 }
 
-/** Suggest the next free ID, but never overwrite an ID that is loaded for editing. */
 function setNextIDs() {
     Object.keys(FORMS).forEach((kind) => {
         if (editing[kind] !== null) return;
@@ -981,7 +926,6 @@ function setNextIDs() {
     });
 }
 
-/** Pending = total - paid. If no price/quantity is known, keep what the record already says. */
 function updatePendingField(inputId, total, paid, isEditing) {
     const input = $(inputId);
     if (!input) return;
@@ -1003,8 +947,6 @@ function calculateActivityTotal() {
     const total = toNumber(value('actUnitCost')) * units;
     updatePendingField('actPending', total, toNumber(value('actPaid')), editing.activity !== null);
 }
-
-/* ---------- Loading a record into its form ---------- */
 
 function fillForm(kind, record) {
     switch (kind) {
@@ -1066,7 +1008,6 @@ function fillForm(kind, record) {
     }
 }
 
-/** Open the right tab, load the record into its form and bring the form into view. */
 function goEdit(kind, id) {
     const cfg = FORMS[kind];
     if (!cfg) return;
@@ -1083,8 +1024,6 @@ function goEdit(kind, id) {
     setEditMode(kind, id);
     if (kind === 'csr') showSelectedCSRBalance();
 
-    // The page scrolls inside .main-content (not the window), so window.scrollTo()
-    // would do nothing - scroll the form itself into view instead.
     const form = $(cfg.form);
     if (form) {
         const card = form.closest('.form-card') || form;
@@ -1094,14 +1033,11 @@ function goEdit(kind, id) {
     }
 }
 
-/* ---------- Validation helpers ---------- */
-
 function fail(message) {
     showToast(message, 'error');
     return false;
 }
 
-/** Blank is allowed (optional field); anything typed must be a number >= 0. */
 function isBlankOrNonNegative(raw) {
     const text = String(raw ?? '').trim();
     if (text === '') return true;
@@ -1113,7 +1049,6 @@ function allBlankOrNonNegative(inputIds) {
     return inputIds.every((id) => isBlankOrNonNegative(value(id)));
 }
 
-/** Saving with an ID that already exists silently overwrites that record, so confirm first. */
 function confirmOverwriteIfNeeded(kind, id) {
     if (editing[kind] !== null) return true;
     const cfg = FORMS[kind];
@@ -1122,8 +1057,6 @@ function confirmOverwriteIfNeeded(kind, id) {
         `${cfg.label} ID #${id} already exists. Saving will overwrite that record. Continue?`
     );
 }
-
-/* ---------- Save handlers ---------- */
 
 async function saveFunderData() {
     const id = value('funderId').trim();
@@ -1135,7 +1068,6 @@ async function saveFunderData() {
     if (!name) return fail('Funder name is required.');
     if (!Number.isFinite(total) || total < 0) return fail('Enter a valid fund amount (0 or more).');
 
-    // Records are linked to funders by name, so two funders with one name would merge their totals.
     const duplicate = globalData.funders.find((f) =>
         sameText(getField(f, 'funderName'), name) && String(getField(f, 'id')) !== id
     );
@@ -1282,11 +1214,11 @@ async function saveDisbursementData() {
    8. MAP ANALYTICS
    ============================================================================= */
 
-const GEOCODE_FAILURE_RETRY_MS = 7 * 24 * 60 * 60 * 1000;   // retry unresolved addresses weekly
+const GEOCODE_FAILURE_RETRY_MS = 7 * 24 * 60 * 60 * 1000;
 
 let lastMapBounds = [];
 let geoCache = loadGeoCache();
-const geoPending = new Map();     // cache key -> { query, callbacks[] }
+const geoPending = new Map();
 const geoQueue = [];
 let geoRunning = false;
 
@@ -1309,7 +1241,6 @@ function initMap() {
 
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-    // Fall back to a plain layer group if the cluster plugin failed to load.
     markersGroup = (typeof L.markerClusterGroup === 'function')
         ? L.markerClusterGroup({ disableClusteringAtZoom: 13, spiderfyOnMaxZoom: true })
         : L.layerGroup();
@@ -1335,8 +1266,6 @@ function populateMapDropdowns() {
     fillSelect('map-funder-filter', toOptions(funders), 'All Funders');
 }
 
-/* ---------- Coordinates ---------- */
-
 function loadGeoCache() {
     try {
         const parsed = JSON.parse(localStorage.getItem(CONFIG.GEOCODE_CACHE_KEY) || '{}');
@@ -1349,10 +1278,9 @@ function loadGeoCache() {
 function saveGeoCache() {
     try {
         localStorage.setItem(CONFIG.GEOCODE_CACHE_KEY, JSON.stringify(geoCache));
-    } catch (_) { /* storage full or unavailable - the cache is only an optimisation */ }
+    } catch (_) {}
 }
 
-/** Cached lookup; an old failure counts as "not cached" so it gets retried. */
 function getCachedGeo(key) {
     const entry = geoCache[key];
     if (!entry) return undefined;
@@ -1366,7 +1294,6 @@ const inRegion = (lat, lon) =>
 const isValidLatLng = (lat, lon) =>
     Number.isFinite(lat) && Number.isFinite(lon) && lat !== 0 && lon !== 0 && Math.abs(lat) <= 90 && Math.abs(lon) <= 180;
 
-/** Small stable offset so schools without coordinates do not stack on one point. */
 function getOffset(text) {
     let hash = 0;
     for (let i = 0; i < text.length; i++) {
@@ -1387,16 +1314,11 @@ function buildGeocodeQuery(address) {
     return /tamil\s*nadu/i.test(address) ? address : `${address}, Tamil Nadu, India`;
 }
 
-/**
- * Synchronous - never waits for the network. Order of preference:
- *   1. Latitude/Longitude columns   2. cached geocode   3. district centre (and queue a geocode)
- */
 function resolveCoordinates(school) {
     let lat = parseFloat(getField(school, 'lat', NaN));
     let lon = parseFloat(getField(school, 'lon', NaN));
 
     if (isValidLatLng(lat, lon)) {
-        // Latitude and longitude entered the wrong way round (e.g. 78.7, 10.8)?
         if (!inRegion(lat, lon) && isValidLatLng(lon, lat) && inRegion(lon, lat)) {
             [lat, lon] = [lon, lat];
         }
@@ -1423,8 +1345,6 @@ function resolveCoordinates(school) {
     return { ...districtFallback(school), approximate: true, geocodeKey: '', geocodeQuery: '' };
 }
 
-/* ---------- Geocoding queue (Nominatim: 1 request/second, results cached) ---------- */
-
 function queueGeocode(key, query, callback) {
     if (geoPending.has(key)) {
         geoPending.get(key).callbacks.push(callback);
@@ -1445,7 +1365,6 @@ async function geocodeOnce(query) {
     if (Array.isArray(data) && data.length > 0) {
         const lat = parseFloat(data[0].lat);
         const lon = parseFloat(data[0].lon);
-        // Reject hits outside Tamil Nadu (a same-named place elsewhere).
         if (isValidLatLng(lat, lon) && inRegion(lat, lon)) return { lat, lon };
     }
     return { notFound: true };
@@ -1463,7 +1382,6 @@ async function runGeoQueue() {
         try {
             const result = await geocodeOnce(job.query);
             if (result.rateLimited) {
-                // Back off: drop the rest of the queue; unresolved schools are retried on the next load.
                 geoPending.delete(key);
                 geoQueue.splice(0).forEach((k) => geoPending.delete(k));
                 break;
@@ -1477,7 +1395,7 @@ async function runGeoQueue() {
                 saveGeoCache();
             }
         } catch (error) {
-            console.warn('Geocoding failed:', error);   // network problem - not cached, retried later
+            console.warn('Geocoding failed:', error);
         }
 
         geoPending.delete(key);
@@ -1487,8 +1405,6 @@ async function runGeoQueue() {
 
     geoRunning = false;
 }
-
-/* ---------- Rendering ---------- */
 
 function buildPopupHtml({ name, address, district, funder, coords }) {
     const location = coords.approximate
@@ -1518,7 +1434,6 @@ function focusMarker(marker) {
         map.flyTo(marker.getLatLng(), Math.max(map.getZoom(), 15));
         marker.openPopup();
     };
-    // zoomToShowLayer expands a cluster first, otherwise the marker would not be on the map yet.
     if (markersGroup && markersGroup.hasLayer(marker) && typeof markersGroup.zoomToShowLayer === 'function') {
         markersGroup.zoomToShowLayer(marker, showPopup);
     } else {
@@ -1542,10 +1457,6 @@ function fitMapToSchools() {
     }
 }
 
-/**
- * Fully synchronous, so overlapping calls (typing in the search box, switching
- * filters quickly) can no longer interleave and duplicate pins or list items.
- */
 function applyMapFilters() {
     if (!map || !markersGroup) return;
     markersGroup.clearLayers();
@@ -1618,7 +1529,6 @@ function applyMapFilters() {
     setText('region-type', `${count} school${count === 1 ? '' : 's'} match the current filters`);
 
     lastMapBounds = bounds;
-    // A hidden map has no size, so fitBounds would compute a nonsense zoom. Defer until it is shown.
     if (isMapVisible()) {
         fitMapToSchools();
     } else {
@@ -1642,8 +1552,166 @@ function switchMapView(mode) {
 }
 
 /* =============================================================================
-   9. UI PLUMBING
+   9. UI PLUMBING & PDF GENERATION
    ============================================================================= */
+
+function generateFunderPDF() {
+    const funder = getSelectedDashboardFunder();
+    if (!funder) {
+        showToast('All Funders View selected. Please select a specific Funder to download the report.', 'error');
+        return;
+    }
+
+    const totals = computeTotals(funder);
+
+    const matchedSchools = globalData.schools.filter(s => sameText(getField(s, 'funderName'), funder));
+    const matchesFunder = row => sameText(getField(row, 'funderName'), funder);
+    
+    const vendorExpenses = globalData.vendors.filter(matchesFunder).map(v => {
+        const amounts = vendorAmounts(v);
+        return {
+            type: 'Vendor',
+            name: getField(v, 'vendorName', 'Vendor'),
+            info: getField(v, 'service', 'Service'),
+            paid: amounts.paid,
+            pending: amounts.pending
+        };
+    });
+
+    const activityExpenses = globalData.activities.filter(matchesFunder).map(a => {
+        const amounts = activityAmounts(a);
+        return {
+            type: 'Activity',
+            name: getField(a, 'vendorName', 'Vendor / Provider'),
+            info: getField(a, 'description', 'Description'),
+            paid: amounts.paid,
+            pending: amounts.pending
+        };
+    });
+
+    const csrDisbursements = globalData.disbursements.filter(matchesFunder).map(d => ({
+        type: 'CSR Allocation',
+        name: getField(d, 'schoolName', 'School'),
+        info: getField(d, 'category', 'Kits/Infra'),
+        paid: toNumber(getField(d, 'amount')),
+        pending: 0
+    }));
+
+    const allExpenses = [...vendorExpenses, ...activityExpenses, ...csrDisbursements];
+
+    const schoolRows = matchedSchools.length > 0 
+        ? matchedSchools.map(s => `
+            <tr>
+                <td>#${escapeHtml(getField(s, 'id'))}</td>
+                <td><b>${escapeHtml(getField(s, 'schoolName'))}</b></td>
+                <td>${escapeHtml(getField(s, 'address', 'Address not specified'))}</td>
+                <td>${escapeHtml(getField(s, 'contact', 'N/A'))}</td>
+                <td>${escapeHtml(getField(s, 'status', 'In Progress'))}</td>
+            </tr>`).join('')
+        : `<tr><td colspan="5" style="text-align:center;">No schools registered for this funder.</td></tr>`;
+
+    const expenseRows = allExpenses.length > 0
+        ? allExpenses.map(e => `
+            <tr>
+                <td><span class="badge">${escapeHtml(e.type)}</span></td>
+                <td><b>${escapeHtml(e.name)}</b></td>
+                <td>${escapeHtml(e.info)}</td>
+                <td style="color:#047857; font-weight:bold;">${escapeHtml(formatINR(e.paid))}</td>
+                <td style="color:#b91c1c; font-weight:bold;">${escapeHtml(formatINR(e.pending))}</td>
+            </tr>`).join('')
+        : `<tr><td colspan="5" style="text-align:center;">No expense entries recorded.</td></tr>`;
+
+    let pdfContainer = $('pdfExportContainer');
+    if (!pdfContainer) {
+        pdfContainer = document.createElement('div');
+        pdfContainer.id = 'pdfExportContainer';
+        document.body.appendChild(pdfContainer);
+    }
+
+    pdfContainer.innerHTML = `
+        <div class="pdf-header">
+            <div class="pdf-header-title">
+                <h2>SASTRA STEM LAB Portal</h2>
+                <p>Funder Report: <b>${escapeHtml(funder)}</b></p>
+            </div>
+            <div class="pdf-logos">
+                <img src="SASTRA.png" alt="SASTRA Logo" onerror="this.src='SASTRA.jpg'">
+                <div class="pdf-logo-divider"></div>
+                <img src="FIRST.png" alt="FIRST Logo" onerror="this.src='FIRST.jpg'">
+            </div>
+        </div>
+
+        <h3 class="pdf-section-title">Financial Summary</h3>
+        <div class="pdf-summary-grid">
+            <div class="pdf-summary-card">
+                <span>Total Fund</span>
+                <strong>${escapeHtml(formatINR(totals.totalFund))}</strong>
+            </div>
+            <div class="pdf-summary-card">
+                <span>Total Expenses</span>
+                <strong>${escapeHtml(formatINR(totals.expense))}</strong>
+            </div>
+            <div class="pdf-summary-card">
+                <span>Balance Available</span>
+                <strong>${escapeHtml(formatINR(totals.balance))}</strong>
+            </div>
+            <div class="pdf-summary-card">
+                <span>Pending Payments</span>
+                <strong>${escapeHtml(formatINR(totals.pending))}</strong>
+            </div>
+        </div>
+
+        <h3 class="pdf-section-title">Associated Schools & Locations</h3>
+        <table class="pdf-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>School Name</th>
+                    <th>Address</th>
+                    <th>Contact</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${schoolRows}
+            </tbody>
+        </table>
+
+        <h3 class="pdf-section-title">Expense Breakdown & Pending Bills</h3>
+        <table class="pdf-table">
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th>Entity / Vendor</th>
+                    <th>Details</th>
+                    <th>Amount Paid</th>
+                    <th>Pending</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${expenseRows}
+            </tbody>
+        </table>
+    `;
+
+    const opt = {
+        margin:       [10, 10, 10, 10],
+        filename:     `${funder.replace(/\s+/g, '_')}_CSR_Report.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    pdfContainer.style.display = 'block';
+    html2pdf().set(opt).from(pdfContainer).save().then(() => {
+        pdfContainer.style.display = 'none';
+        showToast('Funder PDF Report Downloaded Successfully!', 'success');
+    }).catch(err => {
+        console.error('PDF Generation Error:', err);
+        pdfContainer.style.display = 'none';
+        showToast('Failed to generate PDF. Please try again.', 'error');
+    });
+}
 
 function switchTab(tabId) {
     const section = $(tabId);
@@ -1663,7 +1731,6 @@ function switchTab(tabId) {
     if (scroller) scroller.scrollTop = 0;
 
     if (tabId === 'map-view' && map) {
-        // The map was hidden (zero size) until now: let Leaflet re-measure, then apply any deferred fit.
         setTimeout(() => {
             map.invalidateSize();
             if (pendingMapFit) {
@@ -1707,7 +1774,7 @@ function showToast(message, type = 'success') {
     icon.setAttribute('aria-hidden', 'true');
 
     const text = document.createElement('span');
-    text.textContent = message;          // textContent: never interpreted as HTML
+    text.textContent = message;
 
     toast.append(icon, text);
     container.appendChild(toast);
@@ -1720,7 +1787,6 @@ function exportToCSV(tableId, filename) {
 
     const toCell = (raw) => {
         let text = String(raw).replace(/\s+/g, ' ').trim();
-        // Stop spreadsheet apps from running cells that start with a formula character.
         if (/^[=+@]/.test(text) || /^-(?![\d₹])/.test(text)) text = `'${text}`;
         return `"${text.replace(/"/g, '""')}"`;
     };
@@ -1728,9 +1794,8 @@ function exportToCSV(tableId, filename) {
     const lines = [];
     let dataRows = 0;
     Array.from(table.rows).forEach((row, index) => {
-        if (row.querySelector('.empty-state')) return;            // "No records" placeholder row
+        if (row.querySelector('.empty-state')) return;
         if (index > 0) dataRows++;
-        // Drop the last column (the Actions buttons).
         lines.push(Array.from(row.cells).slice(0, -1).map((td) => toCell(td.innerText)).join(','));
     });
 
@@ -1739,7 +1804,6 @@ function exportToCSV(tableId, filename) {
         return;
     }
 
-    // BOM so Excel reads the file as UTF-8 (keeps the ₹ sign and Tamil text intact).
     const blob = new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -1753,7 +1817,6 @@ function exportToCSV(tableId, filename) {
     showToast('CSV Downloaded Successfully!', 'success');
 }
 
-/** Try the .png logo, then the .jpg fallback, then hide it (instead of showing a broken image). */
 function initLogos() {
     document.querySelectorAll('img[data-fallback]').forEach((img) => {
         const handleFailure = () => {
@@ -1766,13 +1829,12 @@ function initLogos() {
             }
         };
         img.addEventListener('error', handleFailure);
-        // The error may already have fired before this script ran.
         if (img.complete && img.naturalWidth === 0) handleFailure();
     });
 }
 
 function handleDocumentClick(event) {
-    if (event.target === $('detailsModal')) {      // click on the dimmed backdrop
+    if (event.target === $('detailsModal')) {
         closeModal();
         return;
     }
@@ -1799,7 +1861,6 @@ function handleKeydown(event) {
         closeModal();
         return;
     }
-    // Cards act as buttons: Enter / Space activate them like a click.
     if ((event.key === 'Enter' || event.key === ' ') && event.target.matches('[role="button"][data-action]')) {
         event.preventDefault();
         event.target.click();
@@ -1810,26 +1871,23 @@ function bindEvents() {
     document.addEventListener('click', handleDocumentClick);
     document.addEventListener('keydown', handleKeydown);
 
-    // Dashboard & list filters ('input' also catches paste / cut, unlike 'keyup')
     on('funderFilter', 'change', calculateMetrics);
+    on('downloadFunderPdfBtn', 'click', generateFunderPDF);
     on('schoolSearch', 'input', filterSchools);
     ['schoolFunderFilter', 'schoolCategoryFilter', 'schoolStatusFilter'].forEach((id) => on(id, 'change', filterSchools));
     ['vendorFunderFilter', 'vendorYearFilter'].forEach((id) => on(id, 'change', filterVendors));
     ['activityFunderFilter', 'activityCategoryFilter'].forEach((id) => on(id, 'change', filterActivities));
 
-    // Map filters (search is debounced so each keystroke does not rebuild every pin)
     on('map-search-input', 'input', debounce(applyMapFilters, CONFIG.SEARCH_DEBOUNCE_MS));
     on('map-district-filter', 'change', applyMapFilters);
     on('map-funder-filter', 'change', applyMapFilters);
     on('syncBtn', 'click', () => fetchData());
 
-    // Live calculators
     ['vendorUnitCost', 'vendorUnits', 'vendorPaid'].forEach((id) => on(id, 'input', calculateVendorTotal));
     ['actUnitCost', 'actUnits', 'actPaid'].forEach((id) => on(id, 'input', calculateActivityTotal));
     on('csrFunderSelect', 'change', showSelectedCSRBalance);
     on('csrAmount', 'input', showSelectedCSRBalance);
 
-    // Form submission (native validation runs first)
     const submitHandlers = {
         funderForm: saveFunderData,
         schoolForm: saveSchoolData,
