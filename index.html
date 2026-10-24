@@ -155,7 +155,7 @@
                         </select>
                     </div>
 
-                    <button class="refresh-btn" onclick="fetchMapSheetData()">
+                    <button class="refresh-btn" onclick="fetchData()">
                         <i class="fa-solid fa-rotate"></i> Sync Google Sheet
                     </button>
                 </div>
@@ -244,9 +244,36 @@
         <section id="schools" class="tab-content">
             <div class="page-header">
                 <h2 class="page-title">School Implementation</h2>
-                <div class="search-bar">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" id="schoolSearch" placeholder="Search school name or ID..." onkeyup="filterSchools()">
+                <div class="filter-group" style="flex-wrap: wrap;">
+                    <div class="search-bar" style="border: none; padding: 0; box-shadow: none;">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="schoolSearch" placeholder="Search school name or ID..." onkeyup="filterSchools()">
+                    </div>
+                    <div>
+                        <label for="schoolFunderFilter"><i class="fa-solid fa-filter"></i> Funder:</label>
+                        <select id="schoolFunderFilter" onchange="filterSchools()">
+                            <option value="ALL">All Funders</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="schoolCategoryFilter"><i class="fa-solid fa-layer-group"></i> Category:</label>
+                        <select id="schoolCategoryFilter" onchange="filterSchools()">
+                            <option value="ALL">All Categories</option>
+                            <option value="STEM Kits Only">STEM Kits Only</option>
+                            <option value="STEM Kits + System">STEM Kits + System</option>
+                            <option value="STEM Kits + System + Furnitures">STEM Kits + System + Furnitures</option>
+                            <option value="Full Infra + Kits + Systems">Full Infra + Kits + Systems</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="schoolStatusFilter"><i class="fa-solid fa-list-check"></i> Status:</label>
+                        <select id="schoolStatusFilter" onchange="filterSchools()">
+                            <option value="ALL">All Status</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Pending">Pending</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -286,10 +313,6 @@
                                 <option value="Completed">Completed</option>
                                 <option value="Pending">Pending</option>
                             </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Photo URL</label>
-                            <input type="url" id="schoolPhoto" placeholder="https://image-url.com or Drive Link">
                         </div>
                     </div>
                     <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save School Entry</button>
