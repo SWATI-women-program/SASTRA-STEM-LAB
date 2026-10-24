@@ -538,7 +538,7 @@ tr:last-child td {
     border-radius: var(--radius);
     width: 90%;
     max-width: 650px;
-    max-height: 85vh; /* Screen-க்கு ஏற்றவாறு உயரம் அமைக்கும் */
+    max-height: 85vh;
     display: flex;
     flex-direction: column;
     box-shadow: var(--shadow-lg);
@@ -574,7 +574,7 @@ tr:last-child td {
 
 .modal-body {
     padding: 1.5rem;
-    overflow-y: auto; /* Modal-க்குள்ளேயே Scroll ஆகும் */
+    overflow-y: auto;
     flex: 1;
 }
 
@@ -607,4 +607,213 @@ tr:last-child td {
 @keyframes slideIn {
     from { transform: translateX(100%); }
     to { transform: translateX(0); }
+}
+
+/* ========================================================= */
+/* MAP ANALYTICS SECTION STYLES (INTEGRATED FROM YOUR CODE) */
+/* ========================================================= */
+
+.map-wrapper {
+    position: relative;
+    width: 100%;
+    height: calc(100vh - 180px);
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-md);
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+    background: #090d16;
+    z-index: 1;
+}
+
+/* Control Panel Overlay */
+.map-controls-panel {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 1000;
+    background: rgba(15, 23, 42, 0.90);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    padding: 16px;
+    width: 310px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    color: #fff;
+}
+
+.view-toggle {
+    display: flex;
+    background: rgba(15, 23, 42, 0.6);
+    padding: 4px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.toggle-btn {
+    flex: 1;
+    padding: 8px 12px;
+    border: none;
+    background: transparent;
+    color: #94a3b8;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.toggle-btn.active {
+    background: linear-gradient(135deg, #38bdf8, #818cf8);
+    color: #ffffff;
+    box-shadow: 0 2px 10px rgba(56, 189, 248, 0.3);
+}
+
+.map-filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.map-filter-group label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: #94a3b8;
+    font-weight: 600;
+}
+
+.map-custom-select, .map-search-input {
+    width: 100%;
+    padding: 8px 12px;
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.8rem;
+    outline: none;
+}
+
+.map-custom-select option {
+    background: #0f172a;
+    color: #fff;
+}
+
+.refresh-btn {
+    width: 100%;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #f8fafc;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.refresh-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* Info Panel Overlay */
+.map-info-panel {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    background: rgba(15, 23, 42, 0.90);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    padding: 20px;
+    width: 340px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    color: #fff;
+}
+
+.info-header {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: #38bdf8;
+}
+
+.info-subtitle {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin-bottom: 16px;
+}
+
+.map-stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.map-stat-card {
+    background: rgba(15, 23, 42, 0.7);
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.map-stat-card .label {
+    font-size: 0.7rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+}
+
+.map-stat-card .value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-top: 4px;
+    color: #fff;
+}
+
+.school-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 240px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.school-item {
+    background: rgba(15, 23, 42, 0.7);
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.school-item:hover {
+    border-color: #38bdf8;
+    background: rgba(56, 189, 248, 0.15);
+}
+
+.school-item .name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #fff;
+}
+
+.school-item .details {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin-top: 3px;
 }
