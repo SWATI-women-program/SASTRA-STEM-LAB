@@ -1,11 +1,28 @@
 // Google Apps Script Web App URL
 const API_URL = "https://script.google.com/macros/s/AKfycbxwwfj2lz8RZA81amrGzHnGchiubY-BmxQnUW3bt_5jGmb0cZnbNkV0Z1fNm4fYRFsd/exec";
+const GOOGLE_SCRIPT_MAP_URL = "https://script.google.com/macros/s/AKfycbyKFrXihH5IYF2M_4ndRbnuyxfum4WhpqzW9k_hIXEb7I57-aXVIyRm80HM6wFptdS3/exec";
 
 let globalData = { funders: [], schools: [], vendors: [], activities: [], disbursements: [] };
 let chartInstance = null;
 
+// Map Variables
+let map = null;
+let markersGroup = null;
+let currentMapMode = 'tn';
+let rawMapSheetData = [];
+let addressCache = {};
+
+const districtCenters = {
+    "chennai": { lat: 13.0827, lon: 80.2707 },
+    "coimbatore": { lat: 11.0168, lon: 76.9558 },
+    "madurai": { lat: 9.9252, lon: 78.1198 },
+    "tiruchirappalli": { lat: 10.7905, lon: 78.7047 },
+    "salem": { lat: 11.6643, lon: 78.1460 }
+};
+
 window.onload = function() {
     fetchData();
+    initMap();
 };
 
 function switchTab(tabId, element) {
@@ -14,6 +31,13 @@ function switchTab(tabId, element) {
     
     document.getElementById(tabId).classList.add('active');
     element.classList.add('active');
+
+    // Tab மாறும் போது Map சரியாக Render ஆக
+    if (tabId === 'map-view' && map) {
+        setTimeout(() => {
+            map.invalidateSize();
+        }, 200);
+    }
 }
 
 async function fetchData() {
@@ -21,7 +45,6 @@ async function fetchData() {
         const response = await fetch(API_URL);
         const data = await response.json();
 
-        // Safe defaults - disbursements sheet oda data varala na kooda error varaadhu
         globalData = {
             funders: data.funders || [],
             schools: data.schools || [],
@@ -42,6 +65,191 @@ async function fetchData() {
         showToast("Data loading failed. Please check permissions.", "error");
     }
 }
+
+/* ================= MAP ANALYTICS FUNCTIONS ================= */
+
+function initMap() {
+    if (map) return;
+
+    map = L.map('map', { zoomControl: false }).setView([11.1271, 78.6569], 7);
+
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 18,
+        attribution: 'Tiles &copy; Esri'
+    }).addTo(map);
+
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+    markersGroup = L.markerClusterGroup({
+        disableClusteringAtZoom: 13,
+        spiderfyOnMaxZoom: true
+    }).addTo(map);
+
+    fetchMapSheetData();
+}
+
+async function fetchMapSheetData() {
+    try {
+        const response = await fetch(GOOGLE_SCRIPT_MAP_URL);
+        rawMapSheetData = await response.json();
+        populateMapDropdowns();
+        applyMapFilters();
+    } catch (err) {
+        console.error("Error fetching Map Sheet Data:", err);
+    }
+}
+
+function populateMapDropdowns() {
+    const districtSet = new Set();
+    const funderSet = new Set();
+
+    rawMapSheetData.forEach(item => {
+        if (item["District"]) districtSet.add(item["District"].trim());
+        if (item["Funder"]) funderSet.add(item["Funder"].trim());
+    });
+
+    const distSelect = document.getElementById('map-district-filter');
+    distSelect.innerHTML = '<option value="ALL">All Districts</option>';
+    districtSet.forEach(d => {
+        distSelect.innerHTML += `<option value="${d}">${d}</option>`;
+    });
+
+    const funderSelect = document.getElementById('map-funder-filter');
+    funderSelect.innerHTML = '<option value="ALL">All Funders</option>';
+    funderSet.forEach(f => {
+        funderSelect.innerHTML += `<option value="${f}">${f}</option>`;
+    });
+}
+
+function getOffset(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    return ((hash % 100) / 10000);
+}
+
+async function getCoordinates(school) {
+    const lat = parseFloat(school["Latitude"] || school["lat"] || school["Lat"]);
+    const lon = parseFloat(school["Longitude"] || school["lng"] || school["Lon"] || school["Long"]);
+
+    if (!isNaN(lat) && !isNaN(lon) && lat !== 0 && lon !== 0) {
+        return { lat, lon };
+    }
+
+    const address = school["School Address"] || "";
+    const districtName = school["District"] || "Chennai";
+    const schoolName = school["School Name"] || "";
+    const cacheKey = address || schoolName;
+
+    if (addressCache[cacheKey]) return addressCache[cacheKey];
+
+    if (address && address.trim().length > 3) {
+        try {
+            const query = address.toLowerCase().includes("tamil nadu") ? address : `${address}, Tamil Nadu`;
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
+            const data = await res.json();
+            if (data && data.length > 0) {
+                const coords = { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+                addressCache[cacheKey] = coords;
+                return coords;
+            }
+        } catch (e) {}
+    }
+
+    const distKey = districtName.toLowerCase().trim();
+    const base = districtCenters[distKey] || districtCenters["chennai"];
+    const fallbackCoords = {
+        lat: base.lat + getOffset(schoolName + "lat"),
+        lon: base.lon + getOffset(schoolName + "lon")
+    };
+    addressCache[cacheKey] = fallbackCoords;
+    return fallbackCoords;
+}
+
+async function applyMapFilters() {
+    if (!markersGroup) return;
+    markersGroup.clearLayers();
+
+    const listContainer = document.getElementById('map-school-list');
+    listContainer.innerHTML = '';
+
+    const searchVal = document.getElementById('map-search-input').value.toLowerCase();
+    const selectedDistrict = document.getElementById('map-district-filter').value;
+    const selectedFunder = document.getElementById('map-funder-filter').value;
+
+    let filteredCount = 0;
+    const activeFunders = new Set();
+    const bounds = [];
+
+    for (const school of rawMapSheetData) {
+        const name = school["School Name"] || "Unnamed School";
+        const address = school["School Address"] || "";
+        const district = school["District"] || "";
+        const funder = school["Funder"] || "N/A";
+
+        if (currentMapMode === 'chennai' && district.toLowerCase() !== 'chennai') continue;
+        if (selectedDistrict !== 'ALL' && district.toLowerCase() !== selectedDistrict.toLowerCase()) continue;
+        if (selectedFunder !== 'ALL' && funder.toLowerCase() !== selectedFunder.toLowerCase()) continue;
+        if (searchVal && !name.toLowerCase().includes(searchVal) && !address.toLowerCase().includes(searchVal)) continue;
+
+        filteredCount++;
+        if (funder !== "N/A") activeFunders.add(funder);
+
+        const li = document.createElement('li');
+        li.className = 'school-item';
+        li.innerHTML = `
+            <div class="name">${name}</div>
+            <div class="details">District: <b>${district}</b> | Funder: <b>${funder}</b></div>
+        `;
+        listContainer.appendChild(li);
+
+        const coords = await getCoordinates(school);
+
+        if (coords) {
+            bounds.push([coords.lat, coords.lon]);
+            const marker = L.marker([coords.lat, coords.lon]);
+
+            marker.bindPopup(`
+                <div style="color:#0f172a;">
+                    <strong style="font-size:14px; color:#0284c7;">${name}</strong><br/>
+                    <small style="color:#475569;">${address || 'Address not specified'}</small><br/><br/>
+                    <b>District:</b> ${district}<br/>
+                    <b>Funder:</b> ${funder}<br/>
+                    <small style="color:#64748b;">Lat: ${coords.lat.toFixed(4)}, Lon: ${coords.lon.toFixed(4)}</small>
+                </div>
+            `);
+
+            li.onclick = () => {
+                map.flyTo([coords.lat, coords.lon], 16);
+                marker.openPopup();
+            };
+
+            markersGroup.addLayer(marker);
+        }
+    }
+
+    document.getElementById('map-stat-count').innerText = filteredCount;
+    document.getElementById('map-stat-funders').innerText = activeFunders.size;
+
+    if (bounds.length > 0) {
+        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
+    }
+}
+
+function switchMapView(mode) {
+    currentMapMode = mode;
+    document.getElementById('tn-btn').classList.toggle('active', mode === 'tn');
+    document.getElementById('chennai-btn').classList.toggle('active', mode === 'chennai');
+
+    if (mode === 'tn') {
+        map.flyTo([11.1271, 78.6569], 7);
+    } else {
+        map.flyTo([13.0827, 80.2707], 11);
+    }
+
+    applyMapFilters();
+}
+
+/* ================= PORTAL LOGIC FUNCTIONS ================= */
 
 function setNextIDs() {
     if (globalData.funders && globalData.funders.length) {
@@ -132,7 +340,6 @@ function calculateMetrics() {
     let totalExpense = 0;
     let totalPending = 0;
 
-    // 1. Calculate Funders Total
     globalData.funders.forEach(f => {
         const name = f.Funder_Name || f.funder_name || f["Funder Name"];
         if (selectedFunder === "ALL" || name === selectedFunder) {
@@ -140,7 +347,6 @@ function calculateMetrics() {
         }
     });
 
-    // 2. Calculate Vendor Expenses & Pending
     globalData.vendors.forEach(v => {
         const funder = v.Funder_Name || v.funder_name || v["Funder Name"];
         if (selectedFunder === "ALL" || funder === selectedFunder) {
@@ -149,7 +355,6 @@ function calculateMetrics() {
         }
     });
 
-    // 3. Calculate Activities Expenses & Pending
     (globalData.activities || []).forEach(a => {
         const funder = a.Funder_Name || a.funder_name || a["Funder Name"];
         if (selectedFunder === "ALL" || funder === selectedFunder) {
@@ -165,7 +370,6 @@ function calculateMetrics() {
         }
     });
 
-    // 4. Add School Disbursements (SASTRA CSR-la irundhu school ku direct kudutha amount)
     (globalData.disbursements || []).forEach(d => {
         const funder = d.Funder_Name || d.funder_name || d["Funder Name"];
         if (selectedFunder === "ALL" || funder === selectedFunder) {
@@ -175,7 +379,6 @@ function calculateMetrics() {
 
     const balance = totalFund - totalExpense;
 
-    // Indian Standard (en-IN) Formatting Applied Here
     document.getElementById('totalFund').innerText = '₹' + totalFund.toLocaleString('en-IN');
     document.getElementById('totalExpense').innerText = '₹' + totalExpense.toLocaleString('en-IN');
     document.getElementById('balance').innerText = '₹' + balance.toLocaleString('en-IN');
@@ -243,8 +446,6 @@ function renderTablesAndCards() {
     renderDisbursementTable(globalData.disbursements || []);
 }
 
-// ============ SASTRA CSR - Fund Allocation Feature ============
-
 function getFunderUsedAmount(funderName) {
     let used = 0;
     globalData.vendors.forEach(v => {
@@ -268,7 +469,7 @@ function renderCSRBalances() {
     container.innerHTML = '';
 
     if (!globalData.funders || globalData.funders.length === 0) {
-        container.innerHTML = `<div style="grid-column: 1/-1; text-align:center; color:#666; padding:2rem;">Innum CSR / Funder record edhuvum illa. Mudhalla "Funder Details" tab-la add pannunga.</div>`;
+        container.innerHTML = `<div style="grid-column: 1/-1; text-align:center; color:#666; padding:2rem;">No CSR records found.</div>`;
         return;
     }
 
@@ -322,7 +523,7 @@ function renderDisbursementTable(list) {
     tbody.innerHTML = '';
 
     if (!list || list.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#666; padding:1.5rem;">Innum entha school kum CSR amount kudukala.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#666; padding:1.5rem;">No disbursements found.</td></tr>`;
         return;
     }
 
@@ -352,9 +553,6 @@ function editDisbursement(d) {
 }
 
 async function saveDisbursementData() {
-    // Amount ku badhila Category (STEM Kits / Furniture / System) select pannuvom -
-    // exact ரூபாய் amount ஒவ்வொரு school ku ethuna theriyathu, so balance-oda check panna vendam.
-    // Balance already Vendor tab la (SASTRA CSR ku vaanga item cost) irundhe automatic ah deduct aagum.
     const funderName = document.getElementById('csrFunderSelect').value;
 
     const payload = {
@@ -609,7 +807,7 @@ function showDashboardDetails(type) {
                         <td style="padding:8px;"><b>${name}</b></td>
                         <td style="padding:8px;">₹${Number(f.Total_Fund || 0).toLocaleString('en-IN')}</td>
                         <td style="padding:8px;">
-                            <button class="btn btn-action btn-primary" onclick='closeModal(); switchTab("funders", document.querySelectorAll(".nav-item")[1]); editFunder(${JSON.stringify(f)});'><i class="fa-solid fa-pen"></i></button>
+                            <button class="btn btn-action btn-primary" onclick='closeModal(); switchTab("funders", document.querySelectorAll(".nav-item")[2]); editFunder(${JSON.stringify(f)});'><i class="fa-solid fa-pen"></i></button>
                         </td>
                     </tr>
                 `;
@@ -633,7 +831,6 @@ function showDashboardDetails(type) {
                 <tbody>
         `;
         
-        // Add Vendors Data
         globalData.vendors.forEach(v => {
             const funder = v.Funder_Name || v["Funder Name"];
             const amt = type === 'expenses' ? Number(v.Amount_Paid || 0) : Number(v.Amount_Pending || 0);
@@ -646,14 +843,13 @@ function showDashboardDetails(type) {
                         <td style="padding:8px;">${funder || 'N/A'}</td>
                         <td style="padding:8px; color:${type === 'expenses' ? 'green' : 'red'}; font-weight:bold;">₹${amt.toLocaleString('en-IN')}</td>
                         <td style="padding:8px;">
-                            <button class="btn btn-action btn-primary" onclick='closeModal(); switchTab("vendors", document.querySelectorAll(".nav-item")[3]); editVendor(${JSON.stringify(v)});'><i class="fa-solid fa-pen"></i></button>
+                            <button class="btn btn-action btn-primary" onclick='closeModal(); switchTab("vendors", document.querySelectorAll(".nav-item")[4]); editVendor(${JSON.stringify(v)});'><i class="fa-solid fa-pen"></i></button>
                         </td>
                     </tr>
                 `;
             }
         });
 
-        // Add Activities Data
         (globalData.activities || []).forEach(a => {
             const funder = a.Funder_Name || a["Funder Name"];
             const cost = Number(a.Unit_Cost || a["Unit Cost"] || 0);
@@ -672,14 +868,13 @@ function showDashboardDetails(type) {
                         <td style="padding:8px;">${funder || 'N/A'}</td>
                         <td style="padding:8px; color:${type === 'expenses' ? 'green' : 'red'}; font-weight:bold;">₹${amt.toLocaleString('en-IN')}</td>
                         <td style="padding:8px;">
-                            <button class="btn btn-action btn-primary" onclick='closeModal(); switchTab("activities", document.querySelectorAll(".nav-item")[4]); editActivity(${JSON.stringify(a)});'><i class="fa-solid fa-pen"></i></button>
+                            <button class="btn btn-action btn-primary" onclick='closeModal(); switchTab("activities", document.querySelectorAll(".nav-item")[5]); editActivity(${JSON.stringify(a)});'><i class="fa-solid fa-pen"></i></button>
                         </td>
                     </tr>
                 `;
             }
         });
 
-        // Add School Disbursement Data (only counts as "expense", never "pending")
         if (type === 'expenses') {
             (globalData.disbursements || []).forEach(d => {
                 const funder = d.Funder_Name || d["Funder Name"];
@@ -693,7 +888,7 @@ function showDashboardDetails(type) {
                             <td style="padding:8px;">${funder || 'N/A'}</td>
                             <td style="padding:8px; color:green; font-weight:bold;">₹${amt.toLocaleString('en-IN')}</td>
                             <td style="padding:8px;">
-                                <button class="btn btn-action btn-primary" onclick='closeModal(); switchTab("sastracsr", document.querySelectorAll(".nav-item")[5]); editDisbursement(${JSON.stringify(d)});'><i class="fa-solid fa-pen"></i></button>
+                                <button class="btn btn-action btn-primary" onclick='closeModal(); switchTab("sastracsr", document.querySelectorAll(".nav-item")[6]); editDisbursement(${JSON.stringify(d)});'><i class="fa-solid fa-pen"></i></button>
                             </td>
                         </tr>
                     `;
